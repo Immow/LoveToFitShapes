@@ -44,19 +44,6 @@ local function getNeighbours(index, width, height)
 	return neighbours
 end
 
-local function getEmptyNeighbours(index)
-	local cells = {}
-
-	if index % gridWidth ~= 1 then cells[1] = index - 1 end
-	if index % gridWidth ~= 0 then cells[2] = index + 1 end
-	if index > gridWidth then cells[3] = index - gridWidth end
-	if index <= gridWidth * gridHeight - gridWidth then cells[4] = index + gridWidth end
-	for key, value in pairs(cells) do
-		print(value)
-	end
-	return cells
-end
-
 local function drawGrid()
 	for i = 0, #Grid - 1 do
 		local xCord = offsetX + (((i % gridWidth) * cellSize))
@@ -72,22 +59,18 @@ local currentIndex = math.ceil((gridWidth * gridHeight) / 2)
 local shapeId = 1
 Grid[currentIndex] = shapeId
 local function floodFill()
-	-- local steps = love.math.random(1, 4)
-	-- for i = 1, steps do
-	-- 	local cells = getEmptyNeighbours(currentIndex)
-	-- 	local pickedCell = love.math.random(1, #cells)
-	-- 	Grid[pickedCell] = shapeId
-	-- 	currentIndex = pickedCell
-	-- end
-	-- shapeId = shapeId + 1
+	local steps = love.math.random(1, 4)
+	for i = 1, steps do
+		local cells = getNeighbours(currentIndex, gridWidth, gridHeight)
+		local pickedCell = love.math.random(1, #cells)
+		Grid[pickedCell] = shapeId
+		currentIndex = pickedCell
+	end
+	shapeId = shapeId + 1
 	-- local cells = getEmptyNeighbours(currentIndex)
 	-- for _, value in pairs(cells) do
 	-- 	Grid[value] = 1
 	-- end
-	local test = getNeighbours(1, gridWidth, gridHeight)
-	for key, value in pairs(test) do
-		Grid[value] = "cow"
-	end
 end
 
 function Game:load()
