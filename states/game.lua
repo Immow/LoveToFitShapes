@@ -39,17 +39,11 @@ local function getEmptyNeighbours(index)
 end
 
 local function drawGrid()
-	-- for y = 1, gridHeight do
-	-- 	for x = 1, gridWidth do
-	-- 		love.graphics.rectangle("line", offsetX + (cellSize * (x - 1)), offsetY + (cellSize * (y - 1)), cellSize,
-	-- 			cellSize)
-	-- 	end
-	-- end
-
-	--s.gridX + (((i % s.gridSizeX) * s.tileWidth)), s.gridY + math.floor(i / s.gridSizeY) * s.tileHeight,
-	for i = 1, #Grid do
-		love.graphics.rectangle("line", offsetX + (((i % gridWidth) * cellSize)),
-			offsetY + math.floor((i - 1) / gridHeight) * cellSize, cellSize, cellSize)
+	for i = 0, #Grid - 1 do
+		local xCord = offsetX + (((i % gridWidth) * cellSize))
+		local yCord = offsetY + math.floor((i) / gridHeight) * cellSize
+		love.graphics.rectangle("line", xCord, yCord, cellSize, cellSize)
+		love.graphics.print(Grid[i + 1], xCord, yCord)
 	end
 end
 
@@ -73,7 +67,12 @@ function Game:load()
 	genGrid()
 	-- local test = getEmptyNeighbours(10)
 	-- print(Tprint(test))
-	floodFill()
+	-- floodFill()
+
+	Grid[1] = 1
+	Grid[8] = 2
+
+	print(Tprint(Grid))
 	print("Game module loaded")
 end
 
