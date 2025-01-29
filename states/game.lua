@@ -1,7 +1,7 @@
 require("globals")
 require("libs.tprint")
 local newObject = require("class.object")
-
+local Font = love.graphics.getFont()
 local Game = {}
 local WW, WH = love.graphics.getDimensions()
 local cellSize = 50
@@ -11,9 +11,51 @@ Pieces = {}
 local offsetX, offsetY = WW / 2 - (gridWidth * cellSize) / 2, WH / 2 - (gridHeight * cellSize) / 2
 
 local function genGrid()
-	for i = 1, gridWidth * gridHeight do
-		Grid[i] = 0
+	for y = 1, gridHeight do
+		Grid[y] = {}
+		for x = 1, gridWidth do
+			Grid[y][x] = 0
+		end
 	end
+end
+
+---Returns the cells around the specified x and y index (above, below, left  and right)
+---@param grid any Target table
+---@param x number index
+---@param y number index
+---@return table
+local function getAdjacentCells(grid, x, y)
+	local adjacent = {}
+
+	local directions = {
+		{ dx = 0,  dy = -1 }, -- Above
+		{ dx = 0,  dy = 1 }, -- Below
+		{ dx = -1, dy = 0 }, -- Left
+		{ dx = 1,  dy = 0 }, -- Right
+	}
+
+	for _, dir in ipairs(directions) do
+		local nx, ny = x + dir.dx, y + dir.dy
+		if grid[ny] and grid[ny][nx] then
+			table.insert(adjacent, { x = nx, y = ny, value = grid[ny][nx] })
+		end
+	end
+
+	return adjacent
+end
+
+---Filter a table so returns a table of specied values
+---@param cells table table we check against for specified value
+---@param value number
+---@return table
+local function filterCells(cells, value)
+	local filtered = {}
+	for _, cell in ipairs(cells) do
+		if cell.value == value then
+			table.insert(filtered, cell)
+		end
+	end
+	return filtered
 end
 
 local Object1 = newObject.new({
@@ -27,46 +69,35 @@ local Object1 = newObject.new({
 	image = Assets[1]
 })
 
-local function getCellPosition(index, width)
-	return index % width + 1, math.floor(index / width + 1)
-end
-
-local function getNeighbours(index, width, height)
-	local x, y = getCellPosition(index - 1, width)
-
-	local neighbours = {}
-
-	if x > 0 then table.insert(neighbours, index - 1) end
-	if x < width - 1 then table.insert(neighbours, index + 1) end
-	if y > 0 then table.insert(neighbours, index - width) end
-	if y < height - 1 then table.insert(neighbours, index + width) end
-
-	return neighbours
-end
-
 local function drawGrid()
-	for i = 0, #Grid - 1 do
-		local xCord = offsetX + (((i % gridWidth) * cellSize))
-		local yCord = offsetY + math.floor((i) / gridHeight) * cellSize
-		love.graphics.rectangle("line", xCord, yCord, cellSize, cellSize)
-		love.graphics.setColor(0, 1, 0, 1)
-		love.graphics.print(Grid[i + 1], xCord, yCord)
-		love.graphics.setColor(1, 1, 1, 1)
+	for y = 1, gridHeight do
+		for x = 1, gridWidth do
+			local xPos = offsetX + (cellSize * (x - 1))
+			local yPos = offsetY + (cellSize * (y - 1))
+			love.graphics.rectangle("line", xPos, yPos, cellSize, cellSize)
+			local xPosFont = xPos + cellSize / 2 - Font:getWidth(Grid[y][x]) / 2
+			local yPosFont = yPos + cellSize / 2 - Font:getHeight() / 2
+			love.graphics.print(Grid[y][x], xPosFont, yPosFont)
+		end
 	end
 end
 
-local currentIndex = math.ceil((gridWidth * gridHeight) / 2)
+-- local currentIndex = { x = math.ceil(gridWidth / 2), y = math.ceil(gridHeight / 2) }
+local currentIndex = { x = 4, y = 4 }
 local shapeId = 1
-Grid[currentIndex] = shapeId
+
 local function floodFill()
-	local steps = love.math.random(1, 4)
-	for i = 1, steps do
-		local cells = getNeighbours(currentIndex, gridWidth, gridHeight)
-		local pickedCell = love.math.random(1, #cells)
-		Grid[pickedCell] = shapeId
-		currentIndex = pickedCell
+	if Grid[currentIndex.y][currentIndex.x] == 0 then
+		Grid[currentIndex.y][currentIndex.x] = shapeId
 	end
-	shapeId = shapeId + 1
+	local steps = love.math.random(4, 4)
+	for i = 1, steps do
+		local cells = filterCells(getAdjacentCells(Grid, currentIndex.x, currentIndex.y), 0)
+		local pickedCell = love.math.random(1, #cells)
+		Grid[cells[pickedCell].y][cells[pickedCell].x] = shapeId
+		currentIndex = { x = cells[pickedCell].x, y = cells[pickedCell].y }
+	end
+	-- shapeId = shapeId + 1
 	-- local cells = getEmptyNeighbours(currentIndex)
 	-- for _, value in pairs(cells) do
 	-- 	Grid[value] = 1
@@ -75,7 +106,8 @@ end
 
 function Game:load()
 	genGrid()
-	-- local test = getEmptyNeighbours(10)
+	-- Grid[3][4] = 5
+	-- local test = filterCells(getAdjacentCells(Grid, 4, 4), 5)
 	-- print(Tprint(test))
 	floodFill()
 
