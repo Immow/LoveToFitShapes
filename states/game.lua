@@ -82,37 +82,43 @@ local function drawGrid()
 	end
 end
 
--- local currentIndex = { x = math.ceil(gridWidth / 2), y = math.ceil(gridHeight / 2) }
-local currentIndex = { x = 4, y = 4 }
+local function checkForValue(grid, value)
+	for y = 1, gridHeight do
+		for x = 1, gridWidth do
+			if grid[y][x] == value then
+				return { x = x, y = y }
+			end
+		end
+	end
+end
+
 local shapeId = 1
+local step = 0
 
 local function floodFill()
-	if Grid[currentIndex.y][currentIndex.x] == 0 then
+	-- if step == 2 then return end
+	local currentIndex = checkForValue(Grid, 0)
+	if currentIndex then
 		Grid[currentIndex.y][currentIndex.x] = shapeId
+		local steps = love.math.random(1, 4)
+		for i = 1, steps do
+			local cells = filterCells(getAdjacentCells(Grid, currentIndex.x, currentIndex.y), 0)
+			if #cells == 0 then break end
+			local pickedCell = love.math.random(1, #cells)
+			Grid[cells[pickedCell].y][cells[pickedCell].x] = shapeId
+			currentIndex = { x = cells[pickedCell].x, y = cells[pickedCell].y }
+		end
+		shapeId = shapeId + 1
+		step = step + 1
+		floodFill()
+	else
+		return
 	end
-	local steps = love.math.random(4, 4)
-	for i = 1, steps do
-		local cells = filterCells(getAdjacentCells(Grid, currentIndex.x, currentIndex.y), 0)
-		local pickedCell = love.math.random(1, #cells)
-		Grid[cells[pickedCell].y][cells[pickedCell].x] = shapeId
-		currentIndex = { x = cells[pickedCell].x, y = cells[pickedCell].y }
-	end
-	-- shapeId = shapeId + 1
-	-- local cells = getEmptyNeighbours(currentIndex)
-	-- for _, value in pairs(cells) do
-	-- 	Grid[value] = 1
-	-- end
 end
 
 function Game:load()
 	genGrid()
-	-- Grid[3][4] = 5
-	-- local test = filterCells(getAdjacentCells(Grid, 4, 4), 5)
-	-- print(Tprint(test))
 	floodFill()
-
-	-- print(Tprint(Grid))
-	-- print("Game module loaded")
 end
 
 function Game:mousepressed(mx, my, mouseButton)
