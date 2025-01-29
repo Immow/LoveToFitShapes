@@ -93,15 +93,14 @@ local function checkForValue(grid, value)
 end
 
 local shapeId = 1
-local step = 0
-
 local function floodFill()
-	-- if step == 2 then return end
+	table.insert(Pieces, {})
 	local currentIndex = checkForValue(Grid, 0)
 	if currentIndex then
 		Grid[currentIndex.y][currentIndex.x] = shapeId
+		table.insert(Pieces[shapeId], { x = currentIndex.x, y = currentIndex.y })
 		local steps = love.math.random(1, 4)
-		for i = 1, steps do
+		for _ = 1, steps do
 			local cells = filterCells(getAdjacentCells(Grid, currentIndex.x, currentIndex.y), 0)
 			if #cells == 0 then break end
 			local pickedCell = love.math.random(1, #cells)
@@ -109,7 +108,6 @@ local function floodFill()
 			currentIndex = { x = cells[pickedCell].x, y = cells[pickedCell].y }
 		end
 		shapeId = shapeId + 1
-		step = step + 1
 		floodFill()
 	else
 		return
