@@ -1,5 +1,6 @@
 require("globals")
 require("libs.tprint")
+local json = require("libs.json")
 local newObject = require("class.object")
 local Font = love.graphics.getFont()
 local Game = {}
@@ -82,6 +83,26 @@ local function drawGrid()
 	end
 end
 
+local function shiftCoordinates(grid)
+	for _, piece in ipairs(grid) do
+		local smallestX, smallestY = math.huge, math.huge
+		for _, coord in ipairs(piece) do
+			if coord.x < smallestX then
+				smallestX = coord.x
+			end
+
+			if coord.y < smallestY then
+				smallestY = coord.y
+			end
+		end
+
+		for _, coord in ipairs(piece) do
+			coord.x = coord.x - (smallestX - 1)
+			coord.y = coord.y - (smallestY - 1)
+		end
+	end
+end
+
 local function checkForValue(grid, value)
 	for y = 1, gridHeight do
 		for x = 1, gridWidth do
@@ -94,29 +115,34 @@ end
 
 local shapeId = 1
 local function floodFill()
-	table.insert(Pieces, {})
+	local cellPieces = {}
 	local currentIndex = checkForValue(Grid, 0)
 	if currentIndex then
 		Grid[currentIndex.y][currentIndex.x] = shapeId
-		table.insert(Pieces[shapeId], { x = currentIndex.x, y = currentIndex.y })
-		local steps = love.math.random(1, 4)
+		table.insert(cellPieces, { x = currentIndex.x, y = currentIndex.y })
+		local steps = love.math.random(2, 4)
 		for _ = 1, steps do
-			local cells = filterCells(getAdjacentCells(Grid, currentIndex.x, currentIndex.y), 0)
-			if #cells == 0 then break end
-			local pickedCell = love.math.random(1, #cells)
-			Grid[cells[pickedCell].y][cells[pickedCell].x] = shapeId
-			currentIndex = { x = cells[pickedCell].x, y = cells[pickedCell].y }
+			local cell = cellPieces[love.math.random(1, #cellPieces)]
+			local foundAdjacentCells = filterCells(getAdjacentCells(Grid, cell.x, cell.y), 0)
+			if #foundAdjacentCells == 0 then break end
+			local pickedCell = love.math.random(1, #foundAdjacentCells)
+			Grid[foundAdjacentCells[pickedCell].y][foundAdjacentCells[pickedCell].x] = shapeId
+			currentIndex = { x = foundAdjacentCells[pickedCell].x, y = foundAdjacentCells[pickedCell].y }
+			table.insert(cellPieces, currentIndex)
 		end
+		Pieces[shapeId] = cellPieces
 		shapeId = shapeId + 1
 		floodFill()
-	else
-		return
 	end
 end
 
 function Game:load()
 	genGrid()
 	floodFill()
+	-- print(Tprint(Pieces))
+	love.filesystem.write("unshifted pieces", json.encode(Pieces))
+	shiftCoordinates(Pieces)
+	love.filesystem.write("shifted pieces", json.encode(Pieces))
 end
 
 function Game:mousepressed(mx, my, mouseButton)
