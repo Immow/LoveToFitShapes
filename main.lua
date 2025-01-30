@@ -2,7 +2,6 @@ StateManager = require("libs.statemanager")
 
 function love.load()
 	StateManager:addState("states.game")
-
 	StateManager:setState("game")
 	StateManager:load()
 end

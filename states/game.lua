@@ -83,6 +83,43 @@ local function drawGrid()
 	end
 end
 
+local function getRotatedGridPiece(piece, angle)
+	local rad = math.rad(angle)
+	local cosA, sinA = math.cos(rad), math.sin(rad)
+
+	-- Find bounding box
+	local minX, minY = math.huge, math.huge
+	local maxX, maxY = -math.huge, -math.huge
+
+	for _, coord in ipairs(piece) do
+		if coord.x < minX then minX = coord.x end
+		if coord.y < minY then minY = coord.y end
+		if coord.x > maxX then maxX = coord.x end
+		if coord.y > maxY then maxY = coord.y end
+	end
+
+	-- Find center of bounding box
+	local centerX = (minX + maxX) / 2
+	local centerY = (minY + maxY) / 2
+
+	-- Create new table for rotated piece
+	local rotatedPiece = {}
+
+	for _, coord in ipairs(piece) do
+		local x, y = coord.x - centerX, coord.y - centerY -- Shift to origin
+		local newX = x * cosA - y * sinA
+		local newY = x * sinA + y * cosA
+
+		-- Store new coordinates (rounded) in a new table
+		table.insert(rotatedPiece, {
+			x = math.floor(newX + centerX + 0.5),
+			y = math.floor(newY + centerY + 0.5)
+		})
+	end
+
+	return rotatedPiece
+end
+
 local function shiftCoordinates(grid)
 	for _, piece in ipairs(grid) do
 		local smallestX, smallestY = math.huge, math.huge
@@ -139,10 +176,14 @@ end
 function Game:load()
 	genGrid()
 	floodFill()
-	-- print(Tprint(Pieces))
+	print(Tprint(Pieces[1]))
 	love.filesystem.write("unshifted pieces", json.encode(Pieces))
 	shiftCoordinates(Pieces)
 	love.filesystem.write("shifted pieces", json.encode(Pieces))
+
+	Pieces[1] = getRotatedGridPiece(Pieces[1], 90)
+	shiftCoordinates(Pieces)
+	print(Tprint(Pieces[1]))
 end
 
 function Game:mousepressed(mx, my, mouseButton)
