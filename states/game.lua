@@ -1,5 +1,6 @@
 require("globals")
 require("libs.tprint")
+local Shapes = require("shapes")
 local json = require("libs.json")
 local newObject = require("class.object")
 local Font = love.graphics.getFont()
@@ -173,17 +174,57 @@ local function floodFill()
 	end
 end
 
+local function areShapesEqual(shape1, shape2)
+	if #shape1 ~= #shape2 then
+		return false
+	end
+
+	local shape1Lookup = {}
+	for _, coord in ipairs(shape1) do
+		shape1Lookup[coord.x .. "," .. coord.y] = true
+	end
+
+	for _, coord in ipairs(shape2) do
+		if not shape1Lookup[coord.x .. "," .. coord.y] then
+			return false
+		end
+	end
+
+	return true
+end
+
+local function findMatchingShape(pieces, shapes)
+	for _, piece in ipairs(pieces) do
+		for key, shape in ipairs(shapes) do
+			if areShapesEqual(piece, shape) then
+				return shape, key
+			end
+		end
+	end
+	return nil
+end
+
+local foundShapes = {}
+
 function Game:load()
 	genGrid()
 	floodFill()
-	print(Tprint(Pieces[1]))
 	love.filesystem.write("unshifted pieces", json.encode(Pieces))
 	shiftCoordinates(Pieces)
 	love.filesystem.write("shifted pieces", json.encode(Pieces))
 
-	Pieces[1] = getRotatedGridPiece(Pieces[1], 90)
-	shiftCoordinates(Pieces)
-	print(Tprint(Pieces[1]))
+	for key, piece in ipairs(Pieces) do
+		local matchedShape, matchedShape_key = findMatchingShape({ piece }, Shapes) -- Pass as a single element table
+		if matchedShape then
+			print("Match found for piece: " .. key)
+			-- print(Tprint(piece))
+			print("Matching shape:" .. matchedShape_key)
+			-- print(Tprint(matchedShape))
+		else
+			-- print("No match found for piece:")
+			-- print(Tprint(piece))
+		end
+	end
 end
 
 function Game:mousepressed(mx, my, mouseButton)
