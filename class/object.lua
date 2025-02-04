@@ -1,5 +1,3 @@
-require("loadassets")
-
 local Object = {}
 Object.__index = Object
 
@@ -27,9 +25,9 @@ end
 
 function Object:draw()
 	love.graphics.draw(self.image, self.x, self.y)
-	for _, point in ipairs(self.anchorPoints) do
-		love.graphics.circle("fill", point.x + self.x, point.y + self.y, 5)
-	end
+	-- for _, point in ipairs(self.anchorPoints) do
+	-- 	love.graphics.circle("fill", point.x + self.x, point.y + self.y, 5)
+	-- end
 end
 
 return Object

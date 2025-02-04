@@ -10,6 +10,7 @@ local cellSize = 50
 local gridWidth, gridHeight = 7, 7
 local shapeId = 1
 Grid = {}
+GeneratedShapeNumbers = {}
 Pieces = {}
 local offsetX, offsetY = WW / 2 - (gridWidth * cellSize) / 2, WH / 2 - (gridHeight * cellSize) / 2
 
@@ -60,17 +61,6 @@ local function filterCells(cells, value)
 	end
 	return filtered
 end
-
-local Object1 = newObject.new({
-	x = 200,
-	y = 220,
-	anchorPoints = {
-		{ x = cellSize / 2,            y = cellSize / 2 },
-		{ x = cellSize / 2,            y = cellSize / 2 + cellSize },
-		{ x = cellSize / 2 + cellSize, y = cellSize / 2 + cellSize },
-	},
-	image = Assets[1]
-})
 
 local function drawGrid()
 	for y = 1, gridHeight do
@@ -132,7 +122,7 @@ local function floodFill()
 			currentIndex = { x = foundAdjacentCells[pickedCell].x, y = foundAdjacentCells[pickedCell].y }
 			table.insert(cellPieces, currentIndex)
 		end
-		Pieces[shapeId] = cellPieces
+		GeneratedShapeNumbers[shapeId] = cellPieces
 		shapeId = shapeId + 1
 		floodFill()
 	end
@@ -154,7 +144,18 @@ local function compareShapes(pieces, shapes)
 			lookup = lookup .. "x" .. coord.x .. "y" .. coord.y
 		end
 		if shapes[lookup] then
-			print(shapes[lookup].id)
+			Pieces[i] = newObject.new({
+				x = 200,
+				y = 220,
+				anchorPoints = {
+					{ x = cellSize / 2,            y = cellSize / 2 },
+					{ x = cellSize / 2,            y = cellSize / 2 + cellSize },
+					{ x = cellSize / 2 + cellSize, y = cellSize / 2 + cellSize },
+				},
+				image = Assets[shapes[lookup].id]
+			})
+
+			-- print(shapes[lookup].id)
 			-- print("found index:" .. i .. " cords x:" .. coord.x .. " y:" .. coord.y)
 		else
 			print("no: " .. lookup)
@@ -163,15 +164,18 @@ local function compareShapes(pieces, shapes)
 	end
 end
 
+local function sortAllPieces(pieces)
+	for _, piece in ipairs(pieces) do
+		sortTableByXY(piece)
+	end
+end
+
 function Game:load()
 	genGrid()
 	floodFill()
-	shiftCoordinates(Pieces)
-
-	for key, piece in ipairs(Pieces) do
-		sortTableByXY(piece)
-	end
-	compareShapes(Pieces, Shapes)
+	shiftCoordinates(GeneratedShapeNumbers)
+	sortAllPieces(GeneratedShapeNumbers)
+	compareShapes(GeneratedShapeNumbers, Shapes)
 end
 
 function Game:keypressed(key, scancode, isrepeat)
@@ -188,7 +192,12 @@ end
 
 function Game:draw()
 	drawGrid()
-	-- Object1:draw()
+	for _, piece in ipairs(Pieces) do
+		piece:draw()
+	end
+	love.graphics.setColor(1, 0, 0, 1)
+
+	love.graphics.setColor(1, 1, 1, 1)
 end
 
 function Game:update(dt)
