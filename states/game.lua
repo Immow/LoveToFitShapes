@@ -154,6 +154,7 @@ local function compareShapes(pieces, shapes)
 			lookup = lookup .. "x" .. coord.x .. "y" .. coord.y
 		end
 		if shapes[lookup] then
+			print(shapes[lookup].id)
 			-- print("found index:" .. i .. " cords x:" .. coord.x .. " y:" .. coord.y)
 		else
 			print("no: " .. lookup)
