@@ -15,6 +15,10 @@ function love.mousepressed(x, y, button, isTouch)
 	StateManager:call("mousepressed", x, y, button, isTouch)
 end
 
+function love.wheelmoved(x, y)
+	StateManager:call("wheelmoved", x, y)
+end
+
 function love.update(dt)
 	StateManager:call("update", dt)
 end

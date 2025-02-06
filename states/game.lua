@@ -1,4 +1,4 @@
-require("globals")
+-- require("globals")
 require("libs.tprint")
 local Shapes = require("shapes")
 local json = require("libs.json")
@@ -137,6 +137,35 @@ local function sortTableByXY(tbl)
 	end)
 end
 
+local function rotateOnce(shape, direction)
+	local rotated = {}
+	for i, cell in ipairs(shape) do
+		if direction == "left" then
+			rotated[i] = { x = cell.y, y = -cell.x } -- rotate left
+		else
+			rotated[i] = { x = -cell.y, y = cell.x } -- rotate right
+		end
+	end
+	return rotated
+end
+
+local function shiftShape(shape)
+	-- Find the minimum x and y values
+	local minX, minY = math.huge, math.huge
+	for _, cell in ipairs(shape) do
+		if cell.x < minX then minX = cell.x end
+		if cell.y < minY then minY = cell.y end
+	end
+
+	-- Shift the shape so the smallest x and y are at least 1
+	local adjustedShape = {}
+	for i, cell in ipairs(shape) do
+		adjustedShape[i] = { x = cell.x - minX + 1, y = cell.y - minY + 1 }
+	end
+
+	return adjustedShape
+end
+
 local function compareShapes(pieces, shapes)
 	for i, piece in ipairs(pieces) do
 		local lookup = ""
@@ -144,16 +173,21 @@ local function compareShapes(pieces, shapes)
 			lookup = lookup .. "x" .. coord.x .. "y" .. coord.y
 		end
 		if shapes[lookup] then
-			Pieces[i] = newObject.new({
-				x = 200,
-				y = 220,
-				anchorPoints = {
-					{ x = cellSize / 2,            y = cellSize / 2 },
-					{ x = cellSize / 2,            y = cellSize / 2 + cellSize },
-					{ x = cellSize / 2 + cellSize, y = cellSize / 2 + cellSize },
-				},
-				image = Assets[shapes[lookup].id]
-			})
+			if i == 1 then
+				local anchorRotations = { shapes[lookup].default }
+				-- print(Tprint(anchorRotations))
+				for y = 2, 4 do
+					local rotated = rotateOnce(anchorRotations[y - 1], "left")
+					anchorRotations[y] = shiftShape(rotated)
+				end
+				print(shapes[lookup].id)
+				Pieces[i] = newObject.new({
+					x = 200,
+					y = 400,
+					anchorPoints = anchorRotations,
+					image = Assets[shapes[lookup].id]
+				})
+			end
 
 			-- print(shapes[lookup].id)
 			-- print("found index:" .. i .. " cords x:" .. coord.x .. " y:" .. coord.y)
@@ -183,6 +217,30 @@ function Game:keypressed(key, scancode, isrepeat)
 		print("----------------------------------------")
 		shapeId = 1
 		self:load()
+	end
+end
+
+function Game:wheelmoved(x, y)
+	-- for _, piece in ipairs(Pieces) do
+	-- 	piece:wheelmoved(x, y)
+	-- end
+
+	-- if y > 0 then
+	-- 	self.angle = self.angle + (math.pi / 2) -- Rotate 90 degrees clockwise
+	-- elseif y < 0 then
+	-- 	self.angle = self.angle - (math.pi / 2) -- Rotate 90 degrees counterclockwise
+	-- end
+
+	if y > 0 then
+		Pieces[1].rotation = Pieces[1].rotation - 1
+		if Pieces[1].rotation <= 0 then
+			Pieces[1].rotation = 4
+		end
+	elseif y < 0 then
+		Pieces[1].rotation = Pieces[1].rotation + 1
+		if Pieces[1].rotation >= 5 then
+			Pieces[1].rotation = 1
+		end
 	end
 end
 
