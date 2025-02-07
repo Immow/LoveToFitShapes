@@ -175,10 +175,17 @@ local function compareShapes(pieces, shapes)
 		if shapes[lookup] then
 			if i == 1 then
 				local anchorRotations = { shapes[lookup].default }
+				--  { { x = 1, y = 1 }, { x = 2, y = 1 }, { x = 2, y = 2 }, { x = 3, y = 1 }, { x = 3, y = 2 } }
+				for cell, ac in ipairs(anchorRotations[1]) do
+					anchorRotations[1][cell].x = anchorRotations[1][cell].x - 0.5
+					anchorRotations[1][cell].y = anchorRotations[1][cell].y - 0.5
+				end
+				print(Tprint(anchorRotations[1]))
 				-- print(Tprint(anchorRotations))
 				for y = 2, 4 do
 					local rotated = rotateOnce(anchorRotations[y - 1], "left")
-					anchorRotations[y] = shiftShape(rotated)
+					-- anchorRotations[y] = shiftShape(rotated)
+					anchorRotations[y] = rotated
 				end
 				print(shapes[lookup].id)
 				Pieces[i] = newObject.new({
