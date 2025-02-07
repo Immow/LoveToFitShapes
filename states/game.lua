@@ -137,19 +137,19 @@ local function sortTableByXY(tbl)
 	end)
 end
 
-function RotateOnce(shape, direction)
+local function rotateOnce(shape, direction)
 	local rotated = {}
 	for i, cell in ipairs(shape) do
 		if direction == "left" then
 			rotated[i] = { x = cell.y, y = -cell.x } -- rotate left
-		elseif direction == "right" then
+		else
 			rotated[i] = { x = -cell.y, y = cell.x } -- rotate right
 		end
 	end
 	return rotated
 end
 
-function ShiftShape(shape)
+local function shiftShape(shape)
 	-- Find the minimum x and y values
 	local minX, minY = math.huge, math.huge
 	for _, cell in ipairs(shape) do
@@ -177,16 +177,15 @@ local function compareShapes(pieces, shapes)
 				local anchorRotations = { shapes[lookup].default }
 				-- print(Tprint(anchorRotations))
 				for y = 2, 4 do
-					local rotated = RotateOnce(anchorRotations[y - 1], "left")
-					anchorRotations[y] = ShiftShape(rotated)
+					local rotated = rotateOnce(anchorRotations[y - 1], "left")
+					anchorRotations[y] = shiftShape(rotated)
 				end
 				print(shapes[lookup].id)
 				Pieces[i] = newObject.new({
 					x = 200,
 					y = 400,
 					anchorPoints = anchorRotations,
-					image = Assets[shapes[lookup].id],
-					cellsize = 50,
+					image = Assets[shapes[lookup].id]
 				})
 			end
 
@@ -227,36 +226,26 @@ function Game:wheelmoved(x, y)
 	-- end
 
 	-- if y > 0 then
-	-- 	Pieces[1].angle = Pieces[1].angle + (math.pi / 2) -- Rotate 90 degrees clockwise
+	-- 	self.angle = self.angle + (math.pi / 2) -- Rotate 90 degrees clockwise
 	-- elseif y < 0 then
-	-- 	Pieces[1].angle = Pieces[1].angle - (math.pi / 2) -- Rotate 90 degrees counterclockwise
-	-- end
-
-	-- if y > 0 then
-	-- 	Pieces[1].rotation = Pieces[1].rotation - 1
-	-- 	if Pieces[1].rotation <= 0 then
-	-- 		Pieces[1].rotation = 4
-	-- 	end
-	-- elseif y < 0 then
-	-- 	Pieces[1].rotation = Pieces[1].rotation + 1
-	-- 	if Pieces[1].rotation >= 5 then
-	-- 		Pieces[1].rotation = 1
-	-- 	end
+	-- 	self.angle = self.angle - (math.pi / 2) -- Rotate 90 degrees counterclockwise
 	-- end
 
 	if y > 0 then
-		Pieces[1].rotationIndex = (Pieces[1].rotationIndex + 1) % 4 -- Rotate 90° clockwise
+		Pieces[1].rotation = Pieces[1].rotation - 1
+		if Pieces[1].rotation <= 0 then
+			Pieces[1].rotation = 4
+		end
 	elseif y < 0 then
-		Pieces[1].rotationIndex = (Pieces[1].rotationIndex - 1) % 4 -- Rotate 90° counterclockwise
-		if Pieces[1].rotationIndex < 0 then Pieces[1].rotationIndex = Pieces[1].rotationIndex + 4 end
+		Pieces[1].rotation = Pieces[1].rotation + 1
+		if Pieces[1].rotation >= 5 then
+			Pieces[1].rotation = 1
+		end
 	end
-	print(Pieces[1].x)
 end
 
 function Game:mousepressed(mx, my, mouseButton)
-	for _, piece in ipairs(Pieces) do
-		piece:mousepressed(mx, my, mouseButton)
-	end
+
 end
 
 function Game:draw()
