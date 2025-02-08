@@ -47,14 +47,24 @@ end
 function Object:draw()
 	love.graphics.print(self.rotation)
 	love.graphics.setColor(1, 1, 1, 1)
-	local ox, oy = self.image:getWidth() / 2, self.image:getHeight() / 2
-	love.graphics.draw(self.image, self.x, self.y, -(self.rotation - 1) * (math.pi / 2), 1, 1)
+	local ox, oy = 0, 0
+
+	if self.rotation > 1 and self.rotation < 4 then
+		oy = self.image:getHeight()
+	end
+
+	if self.rotation == 2 or self.rotation == 4 then
+		ox = self.image:getWidth()
+	end
+
+	love.graphics.draw(self.image, self.x, self.y, -(self.rotation - 1) * (math.pi / 2), 1, 1, ox, oy)
+
 	love.graphics.setColor(1, 0, 0, 1)
 	-- love.graphics.circle("fill", self.x + 10, self.y, 5)
 	for _, anchor in ipairs(self.anchorPoints[self.rotation]) do
 		love.graphics.circle("fill", self.x + ((anchor.x) * 50), self.y + ((anchor.y) * 50), 5)
 		-- for _, coord in ipairs(anchor) do
-		-- 	-- print(coord.x)
+		--     -- print(coord.x)
 		-- end
 	end
 	love.graphics.setColor(0, 0, 1, 1)
