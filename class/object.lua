@@ -67,6 +67,7 @@ end
 
 function Object:draw()
 	love.graphics.print(self.rotationIndex)
+
 	love.graphics.setColor(1, 1, 1, 1)
 	local ox, oy = self.image:getWidth() / 2, self.image:getHeight() / 2
 
