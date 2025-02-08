@@ -14,35 +14,15 @@ function Object.new(settings)
 	return instance
 end
 
-function Object:getAnchorPoints()
-	local anchorPositions = {}
-
-	-- Get image center
-	local ox, oy = self.image:getWidth() / 2, self.image:getHeight() / 2
-
-	-- Precompute rotation values
-	local cosR = math.cos(self.rotationIndex * (math.pi / 2))
-	local sinR = math.sin(self.rotationIndex * (math.pi / 2))
-
-	-- Iterate over each anchor point
-	for _, anchor in ipairs(self.anchorPoints[1]) do
-		-- Convert from grid to local space (relative to object's center)
-		local localX = (anchor.x - 1) * self.cellsize - ox
-		local localY = (anchor.y - 1) * self.cellsize - oy
-
-		-- Apply rotation formula
-		local rotatedX = localX * cosR - localY * sinR
-		local rotatedY = localX * sinR + localY * cosR
-
-		-- Convert back to world space
-		local worldX = rotatedX + self.x + ox
-		local worldY = rotatedY + self.y + oy
-
-		-- Store result
-		table.insert(anchorPositions, { x = worldX, y = worldY })
+local function getCentroid(cells)
+	local largestX = 0
+	local largestY = 0
+	for _, value in ipairs(cells) do
+		if value.x > largestX then largestX = value.x end
+		if value.y > largestY then largestY = value.y end
 	end
 
-	return anchorPositions
+	return { x = (largestX) * 50 / 2, y = (largestY) * 50 / 2 }
 end
 
 function Object:wheelmoved(x, y)
@@ -54,7 +34,8 @@ function Object:wheelmoved(x, y)
 end
 
 function Object:mousepressed(x, y, button, isTouch)
-	print(Tprint(self:getAnchorPoints()))
+	local ox, oy = self.image:getWidth() / 2, self.image:getHeight() / 2
+	print(ox, oy)
 end
 
 function Object:mousereleased(x, y, button, isTouch)
@@ -66,28 +47,37 @@ function Object:update(dt)
 end
 
 function Object:draw()
+	love.graphics.setColor(1, 1, 1, 1)
 	love.graphics.print(self.rotationIndex)
 
-	love.graphics.setColor(1, 1, 1, 1)
 	local ox, oy = self.image:getWidth() / 2, self.image:getHeight() / 2
 
 	love.graphics.push()
 	love.graphics.translate(self.x + ox, self.y + oy)
-	self.rotation = self.rotationIndex * (math.pi / 2)
+	self.rotation = -self.rotationIndex * (math.pi / 2)
 	love.graphics.rotate(self.rotation)
 	love.graphics.translate(-ox, -oy)
 	love.graphics.draw(self.image, 0, 0)
-
-	love.graphics.setColor(1, 0, 0, 1)
-	for _, anchor in ipairs(self.anchorPoints[1]) do
-		love.graphics.circle("fill", (anchor.x - 1) * self.cellsize + self.cellsize / 2,
-			(anchor.y - 1) * self.cellsize + self.cellsize / 2, 5)
-	end
 
 	love.graphics.setColor(0, 0, 1, 1)
 	love.graphics.circle("fill", ox, oy, 5)
 
 	love.graphics.pop()
+	love.graphics.setColor(1, 0, 0, 1)
+	local offsetX = 0
+	local offsetY = 0
+
+	for _, anchor in ipairs(self.anchorPoints[self.rotationIndex + 1]) do
+		local shapeCenter = getCentroid(self.anchorPoints[self.rotationIndex + 1])
+		offsetX = ox - shapeCenter.x
+		offsetY = oy - shapeCenter.y
+
+		love.graphics.circle("fill", (anchor.x - 1) * self.cellsize + self.x + offsetX + 25,
+			(anchor.y - 1) * self.cellsize + self.y + offsetY + 25, 5)
+	end
+
+	love.graphics.setColor(1, 1, 0, 1)
+	love.graphics.circle("fill", self.x, self.y, 5) -- draw origin of image
 end
 
 return Object

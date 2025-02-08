@@ -174,13 +174,15 @@ local function compareShapes(pieces, shapes)
 		end
 		if shapes[lookup] then
 			if i == 1 then
+				-- lookup = "x1y1x1y2x2y1x2y2x3y1"
 				local anchorRotations = { shapes[lookup].default }
 				-- print(Tprint(anchorRotations))
 				for y = 2, 4 do
 					local rotated = RotateOnce(anchorRotations[y - 1], "left")
 					anchorRotations[y] = ShiftShape(rotated)
 				end
-				print(shapes[lookup].id)
+
+				-- print(shapes[lookup].id)
 				Pieces[i] = newObject.new({
 					x = 200,
 					y = 400,
@@ -264,8 +266,6 @@ function Game:draw()
 	for _, piece in ipairs(Pieces) do
 		piece:draw()
 	end
-	love.graphics.setColor(1, 0, 0, 1)
-
 	love.graphics.setColor(1, 1, 1, 1)
 end
 
