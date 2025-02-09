@@ -43,7 +43,7 @@ end
 
 function Object:draw()
 	love.graphics.setColor(1, 1, 1, 1)
-	love.graphics.print(self.rotationIndex)
+	DEBUG.add({ rotationIndex = self.rotationIndex })
 
 	local ox, oy = self.image:getWidth() / 2, self.image:getHeight() / 2
 
@@ -60,7 +60,7 @@ function Object:draw()
 	love.graphics.pop()
 	love.graphics.setColor(1, 0, 0, 1)
 
-	for _, anchor in ipairs(self.anchorPoints[self.rotationIndex + 1]) do
+	for i, anchor in ipairs(self.anchorPoints[self.rotationIndex + 1]) do
 		local shapeCenter = getCentroid(self.anchorPoints[self.rotationIndex + 1])
 		local offsetX = ox - shapeCenter.x
 		local offsetY = oy - shapeCenter.y
@@ -68,7 +68,7 @@ function Object:draw()
 		local y = (anchor.y - 1) * self.cellsize + self.y + offsetY + 25
 
 		love.graphics.circle("fill", x, y, 5)
-		LDD.add({ x = x, y = y })
+		DEBUG.add({ ["cell" .. i] = { x = x, y = y } })
 	end
 
 	love.graphics.setColor(1, 1, 0, 1)
