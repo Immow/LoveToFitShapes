@@ -26,16 +26,11 @@ local function getCentroid(cells)
 end
 
 function Object:wheelmoved(x, y)
-	-- if y > 0 then
-	-- 	self.angle = self.angle + (math.pi / 2) -- Rotate 90 degrees clockwise
-	-- elseif y < 0 then
-	-- 	self.angle = self.angle - (math.pi / 2) -- Rotate 90 degrees counterclockwise
-	-- end
+
 end
 
 function Object:mousepressed(x, y, button, isTouch)
-	local ox, oy = self.image:getWidth() / 2, self.image:getHeight() / 2
-	print(ox, oy)
+
 end
 
 function Object:mousereleased(x, y, button, isTouch)
@@ -64,16 +59,16 @@ function Object:draw()
 
 	love.graphics.pop()
 	love.graphics.setColor(1, 0, 0, 1)
-	local offsetX = 0
-	local offsetY = 0
 
 	for _, anchor in ipairs(self.anchorPoints[self.rotationIndex + 1]) do
 		local shapeCenter = getCentroid(self.anchorPoints[self.rotationIndex + 1])
-		offsetX = ox - shapeCenter.x
-		offsetY = oy - shapeCenter.y
+		local offsetX = ox - shapeCenter.x
+		local offsetY = oy - shapeCenter.y
+		local x = (anchor.x - 1) * self.cellsize + self.x + offsetX + 25
+		local y = (anchor.y - 1) * self.cellsize + self.y + offsetY + 25
 
-		love.graphics.circle("fill", (anchor.x - 1) * self.cellsize + self.x + offsetX + 25,
-			(anchor.y - 1) * self.cellsize + self.y + offsetY + 25, 5)
+		love.graphics.circle("fill", x, y, 5)
+		LDD.add({ x = x, y = y })
 	end
 
 	love.graphics.setColor(1, 1, 0, 1)

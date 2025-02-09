@@ -1,5 +1,6 @@
 StateManager = require("libs.statemanager")
-local LM = require("libs.lovemeasure")
+LM = require("libs.lovemeasure")
+LDD = require("libs.lovedebugdraw")
 require("loadassets")
 
 function love.load()
@@ -27,4 +28,5 @@ end
 function love.draw()
 	StateManager:call("draw")
 	LM:draw()
+	LDD.draw()
 end
