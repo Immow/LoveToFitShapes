@@ -2,6 +2,7 @@ StateManager = require("libs.statemanager")
 LM = require("libs.lovemeasure")
 DEBUG = require("libs.lovedebugdraw")
 require("loadassets")
+require("globals")
 
 function love.load()
 	StateManager:addState("states.game")

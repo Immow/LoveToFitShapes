@@ -6,13 +6,12 @@ local newObject = require("class.object")
 local Font = love.graphics.getFont()
 local Game = {}
 local WW, WH = love.graphics.getDimensions()
-local cellSize = 50
 local gridWidth, gridHeight = 7, 7
 local shapeId = 1
 Grid = {}
 GeneratedShapeNumbers = {}
 Pieces = {}
-local offsetX, offsetY = WW / 2 - (gridWidth * cellSize) / 2, WH / 2 - (gridHeight * cellSize) / 2
+
 
 local function genGrid()
 	for y = 1, gridHeight do
@@ -63,13 +62,14 @@ local function filterCells(cells, value)
 end
 
 local function drawGrid()
+	local gridOffsetX, gridOffsetY = WW / 2 - (gridWidth * CELLSIZE) / 2, WH / 2 - (gridHeight * CELLSIZE) / 2
 	for y = 1, gridHeight do
 		for x = 1, gridWidth do
-			local xPos = offsetX + (cellSize * (x - 1))
-			local yPos = offsetY + (cellSize * (y - 1))
-			love.graphics.rectangle("line", xPos, yPos, cellSize, cellSize)
-			local xPosFont = xPos + cellSize / 2 - Font:getWidth(Grid[y][x]) / 2
-			local yPosFont = yPos + cellSize / 2 - Font:getHeight() / 2
+			local xPos = gridOffsetX + (CELLSIZE * (x - 1))
+			local yPos = gridOffsetY + (CELLSIZE * (y - 1))
+			love.graphics.rectangle("line", xPos, yPos, CELLSIZE, CELLSIZE)
+			local xPosFont = xPos + CELLSIZE / 2 - Font:getWidth(Grid[y][x]) / 2
+			local yPosFont = yPos + CELLSIZE / 2 - Font:getHeight() / 2
 			love.graphics.print(Grid[y][x], xPosFont, yPosFont)
 		end
 	end
@@ -166,6 +166,17 @@ function ShiftShape(shape)
 	return adjustedShape
 end
 
+local function getCentroid(cells)
+	local largestX = 0
+	local largestY = 0
+	for _, value in ipairs(cells) do
+		if value.x > largestX then largestX = value.x end
+		if value.y > largestY then largestY = value.y end
+	end
+
+	return { x = (largestX) * CELLSIZE / 2, y = (largestY) * CELLSIZE / 2 }
+end
+
 local function compareShapes(pieces, shapes)
 	for i, piece in ipairs(pieces) do
 		local lookup = ""
@@ -174,26 +185,24 @@ local function compareShapes(pieces, shapes)
 		end
 		if shapes[lookup] then
 			if i == 1 then
-				-- lookup = "x1y1x1y2x2y1x2y2x3y1"
-				local anchorRotations = { shapes[lookup].default }
+				-- lookup = "x1y1x1y2x2y2x3y1x3y2"
 				-- print(Tprint(anchorRotations))
+
+				local anchorRotations = { shapes[lookup].default }
+				local image = Assets[shapes[lookup].id]
 				for y = 2, 4 do
 					local rotated = RotateOnce(anchorRotations[y - 1], "left")
 					anchorRotations[y] = ShiftShape(rotated)
 				end
 
-				-- print(shapes[lookup].id)
 				Pieces[i] = newObject.new({
 					x = 200,
 					y = 400,
 					anchorPoints = anchorRotations,
-					image = Assets[shapes[lookup].id],
-					cellsize = 50,
+					image = image,
+					id = shapes[lookup].id,
 				})
 			end
-
-			-- print(shapes[lookup].id)
-			-- print("found index:" .. i .. " cords x:" .. coord.x .. " y:" .. coord.y)
 		else
 			print("no: " .. lookup)
 			print(Tprint(piece))

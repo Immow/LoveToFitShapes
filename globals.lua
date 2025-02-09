@@ -1,1 +1,1 @@
-CellSize = 50
+CELLSIZE = 50
