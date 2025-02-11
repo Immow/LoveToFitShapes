@@ -77,8 +77,8 @@ end
 
 function Object:draw()
 	love.graphics.setColor(1, 1, 1, 1)
-	DEBUG.add({ x = self.x, y = self.y })
-	DEBUG.add({ rotationIndex = self.rotationIndex, id = self.id })
+	-- DEBUG.add({ x = self.x, y = self.y })
+	-- DEBUG.add({ rotationIndex = self.rotationIndex, id = self.id })
 	local ox, oy = self.image:getWidth() / 2, self.image:getHeight() / 2
 
 	love.graphics.push()
@@ -102,7 +102,7 @@ function Object:draw()
 		local y = (anchor.y - 1) * CELLSIZE + self.y + offsetY + CELLSIZE / 2
 
 		love.graphics.circle("fill", x, y, 5)
-		DEBUG.add({ ["cell" .. i] = { x = x, y = y } })
+		-- DEBUG.add({ ["cell" .. i] = { x = x, y = y } })
 	end
 
 	love.graphics.setColor(1, 1, 0, 1)

@@ -105,7 +105,6 @@ local function checkForValue(grid, value)
 	end
 end
 
-
 local function floodFill()
 	local cellPieces = {}
 	local currentIndex = checkForValue(Grid, 0)
@@ -166,17 +165,6 @@ function ShiftShape(shape)
 	return adjustedShape
 end
 
-local function getCentroid(cells)
-	local largestX = 0
-	local largestY = 0
-	for _, value in ipairs(cells) do
-		if value.x > largestX then largestX = value.x end
-		if value.y > largestY then largestY = value.y end
-	end
-
-	return { x = (largestX) * CELLSIZE / 2, y = (largestY) * CELLSIZE / 2 }
-end
-
 local function compareShapes(pieces, shapes)
 	for i, piece in ipairs(pieces) do
 		local lookup = ""
@@ -185,7 +173,7 @@ local function compareShapes(pieces, shapes)
 		end
 		if shapes[lookup] then
 			-- if i == 1 then
-			-- lookup = "x1y1x1y2x2y2x3y1x3y2"
+			-- lookup = "x1y2x2y2x3y1x3y2x4y1"
 			-- print(Tprint(anchorRotations))
 
 			local anchorRotations = { shapes[lookup].default }
@@ -221,6 +209,25 @@ local function moveToFront(index)
 	table.insert(Pieces, piece)            -- Reinsert at the end (topmost layer)
 end
 
+local function countTotalAnchorPoints()
+	local total = 0
+	for _, piece in ipairs(Pieces) do
+		local currentRotation = piece.rotationIndex + 1 -- Get the correct rotation index
+		if piece.anchorPoints[currentRotation] then
+			total = total + #piece.anchorPoints[currentRotation]
+		end
+	end
+	return total
+end
+
+function Game:reset()
+	shapeId = 1
+	Grid = {}
+	GeneratedShapeNumbers = {}
+	Pieces = {}
+	activePiece = nil
+end
+
 function Game:load()
 	genGrid()
 	floodFill()
@@ -231,7 +238,7 @@ end
 
 function Game:keypressed(key, scancode, isrepeat)
 	if key == "space" then
-		shapeId = 1
+		self:reset()
 		self:load()
 	end
 end
@@ -273,7 +280,8 @@ function Game:draw()
 	for _, piece in ipairs(Pieces) do
 		piece:draw()
 	end
-	love.graphics.setColor(1, 1, 1, 1)
+	DEBUG.add(countTotalAnchorPoints())
+	-- love.graphics.setColor(1, 1, 1, 1)
 end
 
 function Game:update(dt)
