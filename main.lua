@@ -18,6 +18,10 @@ function love.mousepressed(x, y, button, isTouch)
 	StateManager:call("mousepressed", x, y, button, isTouch)
 end
 
+function love.mousereleased(x, y, button, isTouch)
+	StateManager:call("mousereleased", x, y, button, isTouch)
+end
+
 function love.wheelmoved(x, y)
 	StateManager:call("wheelmoved", x, y)
 end

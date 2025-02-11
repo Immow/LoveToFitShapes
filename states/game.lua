@@ -11,7 +11,7 @@ local shapeId = 1
 Grid = {}
 GeneratedShapeNumbers = {}
 Pieces = {}
-
+local activePiece = nil
 
 local function genGrid()
 	for y = 1, gridHeight do
@@ -184,25 +184,25 @@ local function compareShapes(pieces, shapes)
 			lookup = lookup .. "x" .. coord.x .. "y" .. coord.y
 		end
 		if shapes[lookup] then
-			if i == 1 then
-				-- lookup = "x1y1x1y2x2y2x3y1x3y2"
-				-- print(Tprint(anchorRotations))
+			-- if i == 1 then
+			-- lookup = "x1y1x1y2x2y2x3y1x3y2"
+			-- print(Tprint(anchorRotations))
 
-				local anchorRotations = { shapes[lookup].default }
-				local image = Assets[shapes[lookup].id]
-				for y = 2, 4 do
-					local rotated = RotateOnce(anchorRotations[y - 1], "left")
-					anchorRotations[y] = ShiftShape(rotated)
-				end
-
-				Pieces[i] = newObject.new({
-					x = 200,
-					y = 400,
-					anchorPoints = anchorRotations,
-					image = image,
-					id = shapes[lookup].id,
-				})
+			local anchorRotations = { shapes[lookup].default }
+			local image = Assets[shapes[lookup].id]
+			for y = 2, 4 do
+				local rotated = RotateOnce(anchorRotations[y - 1], "left")
+				anchorRotations[y] = ShiftShape(rotated)
 			end
+
+			Pieces[i] = newObject.new({
+				x = 200,
+				y = 400,
+				anchorPoints = anchorRotations,
+				image = image,
+				id = shapes[lookup].id,
+			})
+			-- end
 		else
 			print("no: " .. lookup)
 			print(Tprint(piece))
@@ -216,6 +216,11 @@ local function sortAllPieces(pieces)
 	end
 end
 
+local function moveToFront(index)
+	local piece = table.remove(Pieces, index) -- Remove from list
+	table.insert(Pieces, piece)            -- Reinsert at the end (topmost layer)
+end
+
 function Game:load()
 	genGrid()
 	floodFill()
@@ -226,48 +231,41 @@ end
 
 function Game:keypressed(key, scancode, isrepeat)
 	if key == "space" then
-		print("----------------------------------------")
 		shapeId = 1
 		self:load()
 	end
 end
 
 function Game:wheelmoved(x, y)
-	-- for _, piece in ipairs(Pieces) do
-	-- 	piece:wheelmoved(x, y)
-	-- end
-
-	-- if y > 0 then
-	-- 	Pieces[1].angle = Pieces[1].angle + (math.pi / 2) -- Rotate 90 degrees clockwise
-	-- elseif y < 0 then
-	-- 	Pieces[1].angle = Pieces[1].angle - (math.pi / 2) -- Rotate 90 degrees counterclockwise
-	-- end
-
-	-- if y > 0 then
-	-- 	Pieces[1].rotation = Pieces[1].rotation - 1
-	-- 	if Pieces[1].rotation <= 0 then
-	-- 		Pieces[1].rotation = 4
-	-- 	end
-	-- elseif y < 0 then
-	-- 	Pieces[1].rotation = Pieces[1].rotation + 1
-	-- 	if Pieces[1].rotation >= 5 then
-	-- 		Pieces[1].rotation = 1
-	-- 	end
-	-- end
-
-	if y > 0 then
-		Pieces[1].rotationIndex = (Pieces[1].rotationIndex + 1) % 4 -- Rotate 90° clockwise
-	elseif y < 0 then
-		Pieces[1].rotationIndex = (Pieces[1].rotationIndex - 1) % 4 -- Rotate 90° counterclockwise
-		if Pieces[1].rotationIndex < 0 then Pieces[1].rotationIndex = Pieces[1].rotationIndex + 4 end
+	if activePiece then
+		if y > 0 then
+			activePiece.rotationIndex = (activePiece.rotationIndex + 1) % 4 -- Rotate 90° clockwise
+		elseif y < 0 then
+			activePiece.rotationIndex = (activePiece.rotationIndex - 1) % 4 -- Rotate 90° counterclockwise
+			if activePiece.rotationIndex < 0 then activePiece.rotationIndex = activePiece.rotationIndex + 4 end
+		end
 	end
-	print(Pieces[1].x)
 end
 
 function Game:mousepressed(mx, my, mouseButton)
-	for _, piece in ipairs(Pieces) do
-		piece:mousepressed(mx, my, mouseButton)
+	for i = #Pieces, 1, -1 do
+		local piece = Pieces[i]
+		local anchorPointsPixels = piece:getAnchorPointsInPixels(piece.rotationIndex)
+
+		if piece:AABB({ x = mx, y = my }, anchorPointsPixels) then
+			activePiece = piece
+			moveToFront(i)
+
+			activePiece.clickOffsetX = mx - activePiece.x
+			activePiece.clickOffsetY = my - activePiece.y
+
+			break
+		end
 	end
+end
+
+function Game:mousereleased(x, y, button, isTouch)
+	activePiece = nil
 end
 
 function Game:draw()
@@ -279,7 +277,11 @@ function Game:draw()
 end
 
 function Game:update(dt)
-
+	if activePiece and love.mouse.isDown(1) then
+		local mx, my = love.mouse.getPosition()
+		activePiece.x = mx - activePiece.clickOffsetX
+		activePiece.y = my - activePiece.clickOffsetY
+	end
 end
 
 return Game
