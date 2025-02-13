@@ -6,6 +6,8 @@ function Object.new(settings)
 	local instance = setmetatable({}, Object)
 	instance.x = settings.x or 0
 	instance.y = settings.y or 0
+	instance.w = settings.w or error("no width")
+	instance.h = settings.h or error("no height")
 	instance.rotationIndex = settings.rotationIndex or 0
 	instance.image = settings.image
 	instance.anchorPoints = settings.anchorPoints or error("no anchorPoints")
