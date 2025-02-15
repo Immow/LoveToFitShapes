@@ -1,5 +1,9 @@
 local Shapes = require("shapes")
 local newObject = require("class.object")
+
+local shapeTypes = require("shapeTypes")
+local newPiece = require("class.piece")
+
 local Font = love.graphics.getFont()
 local GenerateShapes = { grid = {} }
 local WW, WH = love.graphics.getDimensions()
@@ -165,27 +169,29 @@ local function compareShapes(pieces, shapes)
 			lookup = lookup .. "x" .. coord.x .. "y" .. coord.y
 		end
 		if shapes[lookup] then
+			-- Pieces[1].updateState() -- In case other thing doesn't work
+
 			-- if i == 1 then
-			-- lookup = "x1y2x2y2x3y1x3y2x4y1"
-			-- print(Tprint(anchorRotations))
+			-- -- lookup = "x1y2x2y2x3y1x3y2x4y1"
+			-- -- print(Tprint(anchorRotations))
 
-			local anchorRotations = { shapes[lookup].default }
-			local image = Assets[shapes[lookup].id]
-			for y = 2, 4 do
-				local rotated = RotateOnce(anchorRotations[y - 1], "left")
-				anchorRotations[y] = ShiftShape(rotated)
-			end
-
-			Pieces[i] = newObject.new({
-				x = 200,
-				y = 400,
-				w = image:getWidth(),
-				h = image:getHeight(),
-				anchorPoints = anchorRotations,
-				image = image,
-				id = shapes[lookup].id
-			})
+			-- local anchorRotations = { shapes[lookup].default }
+			-- local image = Assets[shapes[lookup].id]
+			-- for y = 2, 4 do
+			-- 	local rotated = RotateOnce(anchorRotations[y - 1], "left")
+			-- 	anchorRotations[y] = ShiftShape(rotated)
 			-- end
+
+			-- Pieces[i] = newObject.new({
+			-- 	x = 200,
+			-- 	y = 400,
+			-- 	w = image:getWidth(),
+			-- 	h = image:getHeight(),
+			-- 	anchorPoints = anchorRotations,
+			-- 	image = image,
+			-- 	id = shapes[lookup].id
+			-- })
+			-- -- end
 		else
 			print("no: " .. lookup)
 			print(Tprint(piece))
@@ -239,8 +245,26 @@ function GenerateShapes:load()
 	self:floodFill()
 	shiftCoordinates(GeneratedShapeNumbers)
 	sortAllPieces(GeneratedShapeNumbers)
-	compareShapes(GeneratedShapeNumbers, Shapes)
-	placePiecesInCircle()
+	--compareShapes(GeneratedShapeNumbers, Shapes)
+	--placePiecesInCircle()
+	Pieces[1] = newPiece.new({
+		id = 1,
+		shapeTypeId = 15,
+		x = 200,
+		y = 400,
+		rotation = 1
+	})
+	Pieces[1]:updateState()
+
+	Pieces[2] = newPiece.new({
+		id = 2,
+		shapeTypeId = 15,
+		x = 400,
+		y = 600,
+		rotation = 1
+	})
+	Pieces[2]:updateState()
+
 end
 
 function GenerateShapes:keypressed(key, scancode, isrepeat)

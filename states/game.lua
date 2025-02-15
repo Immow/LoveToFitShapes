@@ -46,6 +46,16 @@ function Game:isInsideGrid(piece)
 	return isInside(piece, grid)
 end
 
+function Game:AABB(mouse, points)
+	for _, point in ipairs(points) do
+		local xRegion = point.x - CELLSIZE / 2 <= mouse.x and point.x + CELLSIZE / 2 >= mouse.x
+		local yRegion = point.y - CELLSIZE / 2 <= mouse.y and point.y + CELLSIZE / 2 >= mouse.y
+		if xRegion and yRegion then return true end
+	end
+
+	return false
+end
+
 function Game:keypressed(key, scancode, isrepeat)
 	if key == "space" then
 		GenerateShapes:reset()
@@ -56,20 +66,21 @@ end
 function Game:wheelmoved(x, y)
 	if activePiece then
 		if y > 0 then
-			activePiece.rotationIndex = (activePiece.rotationIndex + 1) % 4 -- Rotate 90° clockwise
+			activePiece.rotation = ((activePiece.rotation -1 +1) % 4) +1 -- Rotate 90° clockwise
 		elseif y < 0 then
-			activePiece.rotationIndex = (activePiece.rotationIndex - 1) % 4 -- Rotate 90° counterclockwise
-			if activePiece.rotationIndex < 0 then activePiece.rotationIndex = activePiece.rotationIndex + 4 end
+			activePiece.rotation = ((activePiece.rotation -1 -1) % 4) +1 -- Rotate 90° counterclockwise
+			if activePiece.rotation < 0 then activePiece.rotation = activePiece.rotation + 4 end
 		end
+		activePiece:updateState()
 	end
 end
 
 function Game:mousepressed(mx, my, mouseButton)
 	for i = #Pieces, 1, -1 do
 		local piece = Pieces[i]
-		local anchorPointsPixels = piece:getAnchorPointsInPixels(piece.rotationIndex)
+--		local anchorPointsPixels = piece:getAnchorPointsInPixels(piece.rotation)
 
-		if piece:AABB({ x = mx, y = my }, anchorPointsPixels) then
+		if self:AABB({ x = mx, y = my }, Pieces[i].anchorpoints) then
 			activePiece = piece
 			moveToFront(i)
 
@@ -103,6 +114,7 @@ function Game:update(dt)
 		local mx, my = love.mouse.getPosition()
 		activePiece.x = mx - activePiece.clickOffsetX
 		activePiece.y = my - activePiece.clickOffsetY
+		activePiece:updateState()
 	end
 end
 
