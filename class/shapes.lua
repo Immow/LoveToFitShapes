@@ -1,28 +1,21 @@
-local Object = {}
-Object.__index = Object
+local Shapes = {}
+Shapes.__index = Shapes
 
----@class Object
-function Object.new(settings)
-	local instance = setmetatable({}, Object)
-	instance.x = settings.x or 0
-	instance.y = settings.y or 0
-	instance.w = settings.w or error("no width")
-	instance.h = settings.h or error("no height")
-	instance.rotationIndex = settings.rotationIndex or 0
-	instance.image = settings.image
-	instance.anchorPoints = settings.anchorPoints or error("no anchorPoints")
-	instance.id = settings.id or 0
-	instance.active = false
+local newShape = require("class.shape")
 
-	instance.centroids = {}
-	for i = 1, #instance.anchorPoints do
-		instance.centroids[i] = Object.computeCentroid(instance.anchorPoints[i])
+---@class Shapes
+function Shapes.new(settings)
+	local instance = setmetatable({}, Shapes)
+	instance.state = 1
+	instance.objects = {}
+	for i = 1, 4 do
+		instance.objects[i] = newShape.new(settings)
 	end
 
 	return instance
 end
 
-function Object:getAnchorPointsInPixels(rotationIndex)
+function Shapes:getAnchorPointsInPixels(rotationIndex)
 	local points = {}
 	local shapeCenter = self.centroids[rotationIndex + 1] -- Use precomputed centroid
 	local ox, oy = self.image:getWidth() / 2, self.image:getHeight() / 2
@@ -38,7 +31,7 @@ function Object:getAnchorPointsInPixels(rotationIndex)
 	return points
 end
 
-function Object:AABB(mouse, points)
+function Shapes:AABB(mouse, points)
 	for _, point in ipairs(points) do
 		local xRegion = point.x - CELLSIZE / 2 <= mouse.x and point.x + CELLSIZE / 2 >= mouse.x
 		local yRegion = point.y - CELLSIZE / 2 <= mouse.y and point.y + CELLSIZE / 2 >= mouse.y
@@ -48,7 +41,7 @@ function Object:AABB(mouse, points)
 	return false
 end
 
-function Object.computeCentroid(cells)
+function Shapes.computeCentroid(cells)
 	local largestX = 0
 	local largestY = 0
 	for _, value in ipairs(cells) do
@@ -58,26 +51,26 @@ function Object.computeCentroid(cells)
 	return { x = (largestX) * CELLSIZE / 2, y = (largestY) * CELLSIZE / 2 }
 end
 
-function Object:wheelmoved(x, y)
+function Shapes:wheelmoved(x, y)
 
 end
 
-function Object:mousepressed(x, y, button, isTouch)
+function Shapes:mousepressed(x, y, button, isTouch)
 	-- local anchorPointsPixels = self:getAnchorPointsInPixels(self.rotationIndex) -- Get pixel positions
 	-- if self:AABB({ x = x, y = y }, anchorPointsPixels) then
 
 	-- end
 end
 
-function Object:mousereleased(x, y, button, isTouch)
+function Shapes:mousereleased(x, y, button, isTouch)
 
 end
 
-function Object:update(dt)
+function Shapes:update(dt)
 
 end
 
-function Object:draw()
+function Shapes:draw()
 	love.graphics.setColor(1, 1, 1, 1)
 	-- DEBUG.add({ x = self.x, y = self.y })
 	-- DEBUG.add({ rotationIndex = self.rotationIndex, id = self.id })
@@ -111,4 +104,4 @@ function Object:draw()
 	love.graphics.circle("fill", self.x, self.y, 5) -- draw origin of image
 end
 
-return Object
+return Shapes

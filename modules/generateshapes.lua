@@ -1,5 +1,5 @@
 local Shapes = require("shapes")
-local newObject = require("class.object")
+local newObject = require("class.shapes")
 local Font = love.graphics.getFont()
 local GenerateShapes = { grid = {} }
 local WW, WH = love.graphics.getDimensions()
@@ -7,14 +7,14 @@ local shapeId = 1
 local GeneratedShapeNumbers = {}
 local activePiece = nil
 
-function GenerateShapes:genGrid()
-	for y = 1, GRIDHEIGHT do
-		self.grid[y] = {}
-		for x = 1, GRIDWIDTH do
-			self.grid[y][x] = 0
-		end
-	end
-end
+-- function GenerateShapes:genGrid()
+-- 	for y = 1, GRIDHEIGHT do
+-- 		Grid.shapeId[y] = {}
+-- 		for x = 1, GRIDWIDTH do
+-- 			Grid.shapeId[y][x] = 0
+-- 		end
+-- 	end
+-- end
 
 ---Returns the cells around the specified x and y index (above, below, left  and right)
 ---@param grid any Target table
@@ -61,9 +61,9 @@ function GenerateShapes:drawShapeIds()
 		for x = 1, GRIDWIDTH do
 			local xPos = gridOffsetX + (CELLSIZE * (x - 1))
 			local yPos = gridOffsetY + (CELLSIZE * (y - 1))
-			local xPosFont = xPos + CELLSIZE / 2 - Font:getWidth(self.grid[y][x]) / 2
+			local xPosFont = xPos + CELLSIZE / 2 - Font:getWidth(Grid.shapeId[y][x]) / 2
 			local yPosFont = yPos + CELLSIZE / 2 - Font:getHeight() / 2
-			love.graphics.print(self.grid[y][x], xPosFont, yPosFont)
+			love.graphics.print(Grid.shapeId[y][x], xPosFont, yPosFont)
 		end
 	end
 end
@@ -100,17 +100,17 @@ end
 
 function GenerateShapes:floodFill()
 	local cellPieces = {}
-	local currentIndex = checkForValue(self.grid, 0)  -- pick a Grid cell (index) to start from
+	local currentIndex = checkForValue(Grid.shapeId, 0)  -- pick a Grid cell (index) to start from
 	if currentIndex then
-		self.grid[currentIndex.y][currentIndex.x] = shapeId -- set shapeId to cells belong to shape
+		Grid.shapeId[currentIndex.y][currentIndex.x] = shapeId -- set shapeId to cells belong to shape
 		table.insert(cellPieces, { x = currentIndex.x, y = currentIndex.y })
-		local steps = love.math.random(2, 4)          -- determines shape size in cells
+		local steps = love.math.random(2, 4)             -- determines shape size in cells
 		for _ = 1, steps do
 			local cell = cellPieces[love.math.random(1, #cellPieces)]
-			local foundAdjacentCells = filterCells(getAdjacentCells(self.grid, cell.x, cell.y), 0) -- find cells of a certain value
+			local foundAdjacentCells = filterCells(getAdjacentCells(Grid.shapeId, cell.x, cell.y), 0) -- find cells of a certain value
 			if #foundAdjacentCells == 0 then break end
 			local pickedCell = love.math.random(1, #foundAdjacentCells)
-			self.grid[foundAdjacentCells[pickedCell].y][foundAdjacentCells[pickedCell].x] = shapeId
+			Grid.shapeId[foundAdjacentCells[pickedCell].y][foundAdjacentCells[pickedCell].x] = shapeId
 			currentIndex = { x = foundAdjacentCells[pickedCell].x, y = foundAdjacentCells[pickedCell].y }
 			table.insert(cellPieces, currentIndex)
 		end
@@ -165,27 +165,27 @@ local function compareShapes(pieces, shapes)
 			lookup = lookup .. "x" .. coord.x .. "y" .. coord.y
 		end
 		if shapes[lookup] then
-			-- if i == 1 then
-			-- lookup = "x1y2x2y2x3y1x3y2x4y1"
-			-- print(Tprint(anchorRotations))
+			if i == 1 then
+				-- lookup = "x1y2x2y2x3y1x3y2x4y1"
+				-- print(Tprint(anchorRotations))
 
-			local anchorRotations = { shapes[lookup].default }
-			local image = Assets[shapes[lookup].id]
-			for y = 2, 4 do
-				local rotated = RotateOnce(anchorRotations[y - 1], "left")
-				anchorRotations[y] = ShiftShape(rotated)
+				local anchorRotations = { shapes[lookup].default }
+				local image = Assets[shapes[lookup].id]
+				for y = 2, 4 do
+					local rotated = RotateOnce(anchorRotations[y - 1], "left")
+					anchorRotations[y] = ShiftShape(rotated)
+				end
+
+				Pieces[i] = newObject.new({
+					x = 200,
+					y = 400,
+					w = image:getWidth(),
+					h = image:getHeight(),
+					anchorPoints = anchorRotations,
+					image = image,
+					id = shapes[lookup].id
+				})
 			end
-
-			Pieces[i] = newObject.new({
-				x = 200,
-				y = 400,
-				w = image:getWidth(),
-				h = image:getHeight(),
-				anchorPoints = anchorRotations,
-				image = image,
-				id = shapes[lookup].id
-			})
-			-- end
 		else
 			print("no: " .. lookup)
 			print(Tprint(piece))
@@ -228,26 +228,26 @@ end
 
 function GenerateShapes:reset()
 	shapeId = 1
-	self.grid = {}
+	-- Grid = {}
 	GeneratedShapeNumbers = {}
 	Pieces = {}
 	activePiece = nil
 end
 
 function GenerateShapes:load()
-	self:genGrid()
+	-- self:genGrid()
 	self:floodFill()
 	shiftCoordinates(GeneratedShapeNumbers)
 	sortAllPieces(GeneratedShapeNumbers)
 	compareShapes(GeneratedShapeNumbers, Shapes)
-	placePiecesInCircle()
+	-- placePiecesInCircle()
 end
 
 function GenerateShapes:keypressed(key, scancode, isrepeat)
-	if key == "space" then
-		self:reset()
-		self:load()
-	end
+	-- if key == "space" then
+	-- 	self:reset()
+	-- 	self:load()
+	-- end
 end
 
 function GenerateShapes:wheelmoved(x, y)
@@ -262,7 +262,7 @@ function GenerateShapes:wheelmoved(x, y)
 end
 
 function GenerateShapes:draw()
-	self:drawShapeIds()
+	-- self:drawShapeIds()
 end
 
 return GenerateShapes
