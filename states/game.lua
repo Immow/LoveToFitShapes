@@ -64,18 +64,26 @@ function Game:wheelmoved(x, y)
 	end
 end
 
+function Game:AABB(mouse, points)
+	for _, point in ipairs(points) do
+		local xRegion = point.x - CELLSIZE / 2 <= mouse.x and point.x + CELLSIZE / 2 >= mouse.x
+		local yRegion = point.y - CELLSIZE / 2 <= mouse.y and point.y + CELLSIZE / 2 >= mouse.y
+		if xRegion and yRegion then return true end
+	end
+
+	return false
+end
+
 function Game:mousepressed(mx, my, mouseButton)
 	for i = #Pieces, 1, -1 do
 		local piece = Pieces[i]
-		local anchorPointsPixels = piece:getAnchorPointsInPixels(piece.rotationIndex)
-
-		if piece:AABB({ x = mx, y = my }, anchorPointsPixels) then
+		local rotationIndex = piece.rotationIndex + 1
+		if piece.anchorPointsInPixels[rotationIndex] and self:AABB({ x = mx, y = my }, piece.anchorPointsInPixels[rotationIndex]) then
 			activePiece = piece
 			moveToFront(i)
 
 			activePiece.clickOffsetX = mx - activePiece.x
 			activePiece.clickOffsetY = my - activePiece.y
-
 			break
 		end
 	end
@@ -103,6 +111,7 @@ function Game:update(dt)
 		local mx, my = love.mouse.getPosition()
 		activePiece.x = mx - activePiece.clickOffsetX
 		activePiece.y = my - activePiece.clickOffsetY
+		activePiece:sync()
 	end
 end
 

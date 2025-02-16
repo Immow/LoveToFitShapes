@@ -226,6 +226,12 @@ local function countTotalAnchorPoints()
 	return total
 end
 
+local function syncPieces()
+	for _, piece in ipairs(Pieces) do
+		piece:sync()
+	end
+end
+
 function GenerateShapes:reset()
 	shapeId = 1
 	self.grid = {}
@@ -241,6 +247,7 @@ function GenerateShapes:load()
 	sortAllPieces(GeneratedShapeNumbers)
 	compareShapes(GeneratedShapeNumbers, Shapes)
 	placePiecesInCircle()
+	syncPieces()
 end
 
 function GenerateShapes:keypressed(key, scancode, isrepeat)

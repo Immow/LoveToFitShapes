@@ -15,37 +15,30 @@ function Object.new(settings)
 	instance.active = false
 
 	instance.centroids = {}
+	instance.anchorPointsInPixels = {}
 	for i = 1, #instance.anchorPoints do
 		instance.centroids[i] = Object.computeCentroid(instance.anchorPoints[i])
+		instance.anchorPointsInPixels[i] = {}
+
+		for j = 1, #instance.anchorPoints[i] do
+			instance.anchorPointsInPixels[i][j] = { x = 0, y = 0 }
+		end
 	end
 
 	return instance
 end
 
-function Object:getAnchorPointsInPixels(rotationIndex)
-	local points = {}
-	local shapeCenter = self.centroids[rotationIndex + 1] -- Use precomputed centroid
+function Object:sync()
 	local ox, oy = self.image:getWidth() / 2, self.image:getHeight() / 2
-	local offsetX = ox - shapeCenter.x
-	local offsetY = oy - shapeCenter.y
-
-	for i, anchor in ipairs(self.anchorPoints[rotationIndex + 1]) do
-		local x = (anchor.x - 1) * CELLSIZE + self.x + offsetX + CELLSIZE / 2
-		local y = (anchor.y - 1) * CELLSIZE + self.y + offsetY + CELLSIZE / 2
-		table.insert(points, { x = x, y = y })
+	for i, anchor in ipairs(self.anchorPoints[self.rotationIndex + 1]) do
+		local shapeCenter = self.centroids[self.rotationIndex + 1]
+		local offsetX = ox - shapeCenter.x
+		local offsetY = oy - shapeCenter.y
+		self.anchorPointsInPixels[self.rotationIndex + 1][i].x = (anchor.x - 1) * CELLSIZE + self.x + offsetX +
+			CELLSIZE / 2
+		self.anchorPointsInPixels[self.rotationIndex + 1][i].y = (anchor.y - 1) * CELLSIZE + self.y + offsetY +
+			CELLSIZE / 2
 	end
-
-	return points
-end
-
-function Object:AABB(mouse, points)
-	for _, point in ipairs(points) do
-		local xRegion = point.x - CELLSIZE / 2 <= mouse.x and point.x + CELLSIZE / 2 >= mouse.x
-		local yRegion = point.y - CELLSIZE / 2 <= mouse.y and point.y + CELLSIZE / 2 >= mouse.y
-		if xRegion and yRegion then return true end
-	end
-
-	return false
 end
 
 function Object.computeCentroid(cells)
@@ -63,10 +56,7 @@ function Object:wheelmoved(x, y)
 end
 
 function Object:mousepressed(x, y, button, isTouch)
-	-- local anchorPointsPixels = self:getAnchorPointsInPixels(self.rotationIndex) -- Get pixel positions
-	-- if self:AABB({ x = x, y = y }, anchorPointsPixels) then
 
-	-- end
 end
 
 function Object:mousereleased(x, y, button, isTouch)
@@ -78,9 +68,8 @@ function Object:update(dt)
 end
 
 function Object:draw()
+	-- draw image
 	love.graphics.setColor(1, 1, 1, 1)
-	-- DEBUG.add({ x = self.x, y = self.y })
-	-- DEBUG.add({ rotationIndex = self.rotationIndex, id = self.id })
 	local ox, oy = self.image:getWidth() / 2, self.image:getHeight() / 2
 
 	love.graphics.push()
@@ -90,25 +79,21 @@ function Object:draw()
 	love.graphics.translate(-ox, -oy)
 	love.graphics.draw(self.image, 0, 0)
 
+	-- draw centroid of shape
 	love.graphics.setColor(0, 0, 1, 1)
 	love.graphics.circle("fill", ox, oy, 5)
 
 	love.graphics.pop()
 	love.graphics.setColor(1, 0, 0, 1)
 
-	for i, anchor in ipairs(self.anchorPoints[self.rotationIndex + 1]) do
-		local shapeCenter = self.centroids[self.rotationIndex + 1]
-		local offsetX = ox - shapeCenter.x
-		local offsetY = oy - shapeCenter.y
-		local x = (anchor.x - 1) * CELLSIZE + self.x + offsetX + CELLSIZE / 2
-		local y = (anchor.y - 1) * CELLSIZE + self.y + offsetY + CELLSIZE / 2
-
-		love.graphics.circle("fill", x, y, 5)
-		-- DEBUG.add({ ["cell" .. i] = { x = x, y = y } })
+	-- draw anchorPoints
+	for _, anchor in ipairs(self.anchorPointsInPixels[self.rotationIndex + 1]) do
+		love.graphics.circle("fill", anchor.x, anchor.y, 3)
 	end
 
+	-- draw origin of shape
 	love.graphics.setColor(1, 1, 0, 1)
-	love.graphics.circle("fill", self.x, self.y, 5) -- draw origin of image
+	love.graphics.circle("fill", self.x, self.y, 5)
 end
 
 return Object
