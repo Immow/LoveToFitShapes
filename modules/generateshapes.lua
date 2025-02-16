@@ -1,11 +1,9 @@
 local Shapes = require("shapes")
 local newObject = require("class.object")
-local Font = love.graphics.getFont()
 local GenerateShapes = { grid = {} }
 local WW, WH = love.graphics.getDimensions()
 local shapeId = 1
 local GeneratedShapeNumbers = {}
-local activePiece = nil
 
 function GenerateShapes:genGrid()
 	for y = 1, GRIDHEIGHT do
@@ -237,7 +235,6 @@ function GenerateShapes:reset()
 	self.grid = {}
 	GeneratedShapeNumbers = {}
 	Pieces = {}
-	activePiece = nil
 end
 
 function GenerateShapes:load()
@@ -258,18 +255,11 @@ function GenerateShapes:keypressed(key, scancode, isrepeat)
 end
 
 function GenerateShapes:wheelmoved(x, y)
-	if activePiece then
-		if y > 0 then
-			activePiece.rotationIndex = (activePiece.rotationIndex + 1) % 4 -- Rotate 90° clockwise
-		elseif y < 0 then
-			activePiece.rotationIndex = (activePiece.rotationIndex - 1) % 4 -- Rotate 90° counterclockwise
-			if activePiece.rotationIndex < 0 then activePiece.rotationIndex = activePiece.rotationIndex + 4 end
-		end
-	end
+
 end
 
 function GenerateShapes:draw()
-	self:drawShapeIds()
+	-- self:drawShapeIds()
 end
 
 return GenerateShapes

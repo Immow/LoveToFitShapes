@@ -5,6 +5,7 @@ Json = require("libs.json")
 require("loadassets")
 require("globals")
 require("libs.tprint")
+Font = love.graphics.getFont()
 
 function love.load()
 	StateManager:addState("states.game")
