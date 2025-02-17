@@ -45,14 +45,19 @@ local function isInside(a, b)
 		a.y + a.h <= b.y + b.h
 end
 
+local cow = {
+	x = WW / 2 - (GRIDWIDTH / 2 * CELLSIZE) - CELLSIZE / 3,
+	y = WH / 2 - (GRIDHEIGHT / 2 * CELLSIZE) - CELLSIZE / 3,
+	w = GRIDWIDTH * CELLSIZE + (CELLSIZE / 3 * 2),
+	h = GRIDHEIGHT * CELLSIZE + (CELLSIZE / 3 * 2)
+}
 function Game:isInsideGrid(piece)
 	local grid = {
-		x = WW / 2 - (GRIDWIDTH / 2 * CELLSIZE),
-		y = WH / 2 - (GRIDHEIGHT / 2 * CELLSIZE),
-		w = GRIDWIDTH * CELLSIZE,
-		h = GRIDHEIGHT * CELLSIZE
+		x = WW / 2 - (GRIDWIDTH / 2 * CELLSIZE) - CELLSIZE / 3,
+		y = WH / 2 - (GRIDHEIGHT / 2 * CELLSIZE) - CELLSIZE / 3,
+		w = GRIDWIDTH * CELLSIZE + (CELLSIZE / 3 * 2),
+		h = GRIDHEIGHT * CELLSIZE + (CELLSIZE / 3 * 2)
 	}
-
 	return isInside(piece, grid)
 end
 
@@ -118,21 +123,38 @@ local function getGridCellFromPosition(x, y)
 	return gridX, gridY
 end
 
+local function shiftPiece(piece)
+	local smallestX, smallestY = math.huge, math.huge
+	for _, coord in ipairs(piece) do
+		if coord.x < smallestX then
+			smallestX = coord.x
+		end
+
+		if coord.y < smallestY then
+			smallestY = coord.y
+		end
+	end
+	return smallestX, smallestY
+end
+
 
 function Game:mousereleased(x, y, button, isTouch)
 	if activePiece and self:isInsideGrid(activePiece) then
 		local canPlacePiece = true
 		local snappedX, snappedY = nil, nil -- Variables to store the snapping position
+		local pointPos = {}
 
 		for _, point in ipairs(activePiece.anchorPointsInPixels[activePiece.rotationIndex + 1]) do
 			local gridX, gridY = getGridCellFromPosition(point.x, point.y)
-
 			-- Ensure gridX and gridY are valid and check if the cell is empty
 			if gridX and gridY and Grid[gridY] and Grid[gridY][gridX] == 0 then
 				-- Store the first valid snapped position (for aligning the whole piece)
 				if not snappedX or not snappedY then
+					pointPos.x = point.x
+					pointPos.y = point.y
 					snappedX = (gridX - 1) * CELLSIZE + (WW / 2 - (GRIDWIDTH * CELLSIZE) / 2)
 					snappedY = (gridY - 1) * CELLSIZE + (WH / 2 - (GRIDHEIGHT * CELLSIZE) / 2)
+					-- LP.add({ px = point.x, snappedX = snappedX })
 				end
 			else
 				canPlacePiece = false -- The piece overlaps with an occupied cell
@@ -142,8 +164,10 @@ function Game:mousereleased(x, y, button, isTouch)
 
 		-- If all cells are empty, snap the piece into place
 		if canPlacePiece and snappedX and snappedY then
-			activePiece.x = snappedX
-			activePiece.y = snappedY
+			local smallX, smallY = shiftPiece(activePiece.anchorPointsInPixels[activePiece.rotationIndex + 1])
+			-- print("smallX: ", smallX, "self.x", activePiece.x)
+			activePiece.x = activePiece.x - (pointPos.x - (snappedX + CELLSIZE / 2))
+			activePiece.y = activePiece.y - (pointPos.y - (snappedY + CELLSIZE / 2))
 
 			-- Now mark the grid cells as occupied
 			for _, point in ipairs(activePiece.anchorPointsInPixels[activePiece.rotationIndex + 1]) do
@@ -154,6 +178,8 @@ function Game:mousereleased(x, y, button, isTouch)
 			end
 		end
 		activePiece:sync()
+		-- print(Tprint(activePiece.anchorPointsInPixels[activePiece.rotationIndex + 1]))
+		-- print(activePiece.x, activePiece.y)
 	end
 	activePiece = nil
 end
@@ -172,7 +198,6 @@ function Game:drawPieceIds()
 end
 
 function Game:draw()
-	DEBUG.add(activePiece)
 	drawGrid()
 	GenerateShapes:draw()
 	for _, piece in ipairs(Pieces) do
@@ -181,10 +206,11 @@ function Game:draw()
 	self:drawPieceIds()
 	-- DEBUG.add(countTotalAnchorPoints())
 	-- love.graphics.setColor(1, 1, 1, 1)
+	love.graphics.rectangle("line", cow.x, cow.y, cow.w, cow.h)
 end
 
 function Game:update(dt)
-	if activePiece and love.mouse.isDown(1) then
+	if activePiece then
 		local mx, my = love.mouse.getPosition()
 		activePiece.x = mx - activePiece.clickOffsetX
 		activePiece.y = my - activePiece.clickOffsetY

@@ -185,8 +185,8 @@ local function compareShapes(pieces, shapes)
 			})
 			-- end
 		else
-			print("no: " .. lookup)
-			print(Tprint(piece))
+			print("compareShapes function, no: " .. lookup)
+			-- print(Tprint(piece))
 		end
 	end
 end
