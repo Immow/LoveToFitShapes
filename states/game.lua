@@ -4,6 +4,20 @@ local Grid = {} -- Change so we store data in tables so we can do Grid.debug or 
 local GenerateShapes = require("modules.generateshapes")
 local activePiece = nil
 
+function Game.genGrid()
+	for y = 1, GRIDHEIGHT do
+		Grid[y] = {}
+		for x = 1, GRIDWIDTH do
+			Grid[y][x] = 0
+		end
+	end
+end
+
+function Game:load()
+	Game.genGrid()
+	GenerateShapes:load()
+end
+
 local function drawGrid()
 	local gridOffsetX, gridOffsetY = WW / 2 - (GRIDWIDTH * CELLSIZE) / 2, WH / 2 - (GRIDHEIGHT * CELLSIZE) / 2
 	for y = 1, GRIDHEIGHT do
@@ -20,20 +34,6 @@ local function moveToFront(index)
 	table.insert(Pieces, piece)            -- Reinsert at the end (topmost layer)
 end
 
-function Game.genGrid()
-	for y = 1, GRIDHEIGHT do
-		Grid[y] = {}
-		for x = 1, GRIDWIDTH do
-			Grid[y][x] = 0
-		end
-	end
-end
-
-function Game:load()
-	Game.genGrid()
-	GenerateShapes:load()
-end
-
 --- check if a is inside b
 --- @param a table object
 --- @param b table object
@@ -45,12 +45,6 @@ local function isInside(a, b)
 		a.y + a.h <= b.y + b.h
 end
 
-local cow = {
-	x = WW / 2 - (GRIDWIDTH / 2 * CELLSIZE) - CELLSIZE / 3,
-	y = WH / 2 - (GRIDHEIGHT / 2 * CELLSIZE) - CELLSIZE / 3,
-	w = GRIDWIDTH * CELLSIZE + (CELLSIZE / 3 * 2),
-	h = GRIDHEIGHT * CELLSIZE + (CELLSIZE / 3 * 2)
-}
 function Game:isInsideGrid(piece)
 	local grid = {
 		x = WW / 2 - (GRIDWIDTH / 2 * CELLSIZE) - CELLSIZE / 3,
@@ -69,6 +63,36 @@ function Game:AABB(mouse, points)
 	end
 
 	return false
+end
+
+local function getGridCellFromPosition(x, y)
+	-- Grid top-left corner in screen coordinates
+	local gridOffsetX = WW / 2 - (GRIDWIDTH * CELLSIZE) / 2
+	local gridOffsetY = WH / 2 - (GRIDHEIGHT * CELLSIZE) / 2
+
+	-- Convert screen coordinates to grid indices
+	local gridX = math.floor((x - gridOffsetX) / CELLSIZE) + 1
+	local gridY = math.floor((y - gridOffsetY) / CELLSIZE) + 1
+
+	-- Check if the position is inside the grid
+	if gridX < 1 or gridX > GRIDWIDTH or gridY < 1 or gridY > GRIDHEIGHT then
+		return nil, nil -- Out of bounds
+	end
+
+	return gridX, gridY
+end
+
+function Game:drawPieceIds()
+	local gridOffsetX, gridOffsetY = WW / 2 - (GRIDWIDTH * CELLSIZE) / 2, WH / 2 - (GRIDHEIGHT * CELLSIZE) / 2
+	for y = 1, GRIDHEIGHT do
+		for x = 1, GRIDWIDTH do
+			local xPos = gridOffsetX + (CELLSIZE * (x - 1))
+			local yPos = gridOffsetY + (CELLSIZE * (y - 1))
+			local xPosFont = xPos + CELLSIZE / 2 - Font:getWidth(Grid[y][x]) / 2
+			local yPosFont = yPos + CELLSIZE / 2 - Font:getHeight() / 2
+			love.graphics.print(Grid[y][x], xPosFont, yPosFont)
+		end
+	end
 end
 
 function Game:keypressed(key, scancode, isrepeat)
@@ -106,95 +130,42 @@ function Game:mousepressed(mx, my, mouseButton)
 	end
 end
 
-local function getGridCellFromPosition(x, y)
-	-- Grid top-left corner in screen coordinates
-	local gridOffsetX = WW / 2 - (GRIDWIDTH * CELLSIZE) / 2
-	local gridOffsetY = WH / 2 - (GRIDHEIGHT * CELLSIZE) / 2
-
-	-- Convert screen coordinates to grid indices
-	local gridX = math.floor((x - gridOffsetX) / CELLSIZE) + 1
-	local gridY = math.floor((y - gridOffsetY) / CELLSIZE) + 1
-
-	-- Check if the position is inside the grid
-	if gridX < 1 or gridX > GRIDWIDTH or gridY < 1 or gridY > GRIDHEIGHT then
-		return nil, nil -- Out of bounds
-	end
-
-	return gridX, gridY
-end
-
-local function shiftPiece(piece)
-	local smallestX, smallestY = math.huge, math.huge
-	for _, coord in ipairs(piece) do
-		if coord.x < smallestX then
-			smallestX = coord.x
-		end
-
-		if coord.y < smallestY then
-			smallestY = coord.y
-		end
-	end
-	return smallestX, smallestY
-end
-
-
 function Game:mousereleased(x, y, button, isTouch)
-	if activePiece and self:isInsideGrid(activePiece) then
+	if activePiece then
 		local canPlacePiece = true
-		local snappedX, snappedY = nil, nil -- Variables to store the snapping position
+		local snapped = { x = nil, y = nil }
 		local pointPos = {}
+		local rotationIndex = activePiece.rotationIndex + 1
 
-		for _, point in ipairs(activePiece.anchorPointsInPixels[activePiece.rotationIndex + 1]) do
+		for _, point in ipairs(activePiece.anchorPointsInPixels[rotationIndex]) do
 			local gridX, gridY = getGridCellFromPosition(point.x, point.y)
-			-- Ensure gridX and gridY are valid and check if the cell is empty
 			if gridX and gridY and Grid[gridY] and Grid[gridY][gridX] == 0 then
-				-- Store the first valid snapped position (for aligning the whole piece)
-				if not snappedX or not snappedY then
+				if not snapped.x or not snapped.y then
 					pointPos.x = point.x
 					pointPos.y = point.y
-					snappedX = (gridX - 1) * CELLSIZE + (WW / 2 - (GRIDWIDTH * CELLSIZE) / 2)
-					snappedY = (gridY - 1) * CELLSIZE + (WH / 2 - (GRIDHEIGHT * CELLSIZE) / 2)
-					-- LP.add({ px = point.x, snappedX = snappedX })
+					snapped.x = (gridX - 1) * CELLSIZE + (WW / 2 - (GRIDWIDTH * CELLSIZE) / 2)
+					snapped.y = (gridY - 1) * CELLSIZE + (WH / 2 - (GRIDHEIGHT * CELLSIZE) / 2)
 				end
 			else
-				canPlacePiece = false -- The piece overlaps with an occupied cell
-				break     -- Stop checking further, placement is invalid
+				canPlacePiece = false
+				break
 			end
 		end
 
-		-- If all cells are empty, snap the piece into place
-		if canPlacePiece and snappedX and snappedY then
-			local smallX, smallY = shiftPiece(activePiece.anchorPointsInPixels[activePiece.rotationIndex + 1])
-			-- print("smallX: ", smallX, "self.x", activePiece.x)
-			activePiece.x = activePiece.x - (pointPos.x - (snappedX + CELLSIZE / 2))
-			activePiece.y = activePiece.y - (pointPos.y - (snappedY + CELLSIZE / 2))
+		if canPlacePiece and snapped.x and snapped.y then
+			activePiece.x = activePiece.x - (pointPos.x - (snapped.x + CELLSIZE / 2))
+			activePiece.y = activePiece.y - (pointPos.y - (snapped.y + CELLSIZE / 2))
 
-			-- Now mark the grid cells as occupied
-			for _, point in ipairs(activePiece.anchorPointsInPixels[activePiece.rotationIndex + 1]) do
+			for _, point in ipairs(activePiece.anchorPointsInPixels[rotationIndex]) do
 				local gridX, gridY = getGridCellFromPosition(point.x, point.y)
 				if gridX and gridY then
-					Grid[gridY][gridX] = activePiece.id -- Store the shape ID in the grid
+					Grid[gridY][gridX] = 1
 				end
 			end
 		end
 		activePiece:sync()
-		-- print(Tprint(activePiece.anchorPointsInPixels[activePiece.rotationIndex + 1]))
-		-- print(activePiece.x, activePiece.y)
 	end
 	activePiece = nil
-end
-
-function Game:drawPieceIds()
-	local gridOffsetX, gridOffsetY = WW / 2 - (GRIDWIDTH * CELLSIZE) / 2, WH / 2 - (GRIDHEIGHT * CELLSIZE) / 2
-	for y = 1, GRIDHEIGHT do
-		for x = 1, GRIDWIDTH do
-			local xPos = gridOffsetX + (CELLSIZE * (x - 1))
-			local yPos = gridOffsetY + (CELLSIZE * (y - 1))
-			local xPosFont = xPos + CELLSIZE / 2 - Font:getWidth(Grid[y][x]) / 2
-			local yPosFont = yPos + CELLSIZE / 2 - Font:getHeight() / 2
-			love.graphics.print(Grid[y][x], xPosFont, yPosFont)
-		end
-	end
 end
 
 function Game:draw()
@@ -206,7 +177,6 @@ function Game:draw()
 	self:drawPieceIds()
 	-- DEBUG.add(countTotalAnchorPoints())
 	-- love.graphics.setColor(1, 1, 1, 1)
-	love.graphics.rectangle("line", cow.x, cow.y, cow.w, cow.h)
 end
 
 function Game:update(dt)
