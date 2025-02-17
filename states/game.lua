@@ -95,6 +95,47 @@ function Game:drawPieceIds()
 	end
 end
 
+function Game:canPieceBePlaced(piece, rotationIndex)
+	local canPlace = true
+	local snapped = { x = nil, y = nil }
+	local pointPos = {}
+
+	for _, point in ipairs(piece.anchorPointsInPixels[rotationIndex]) do
+		local gridX, gridY = getGridCellFromPosition(point.x, point.y)
+
+		if gridX and gridY and Grid[gridY] and Grid[gridY][gridX] == 0 then
+			if not snapped.x or not snapped.y then
+				pointPos.x = point.x
+				pointPos.y = point.y
+				snapped.x = (gridX - 1) * CELLSIZE + (WW / 2 - (GRIDWIDTH * CELLSIZE) / 2)
+				snapped.y = (gridY - 1) * CELLSIZE + (WH / 2 - (GRIDHEIGHT * CELLSIZE) / 2)
+			end
+		else
+			return false, nil, nil -- If any part of the shape can't be placed, return early
+		end
+	end
+
+	return canPlace, snapped, pointPos
+end
+
+function Game:snapPieceToGrid(piece, snapped, pointPos)
+	piece.x = piece.x - (pointPos.x - (snapped.x + CELLSIZE / 2))
+	piece.y = piece.y - (pointPos.y - (snapped.y + CELLSIZE / 2))
+end
+
+function Game:updateGrid(piece, rotationIndex)
+	piece.occupiedCells = {} -- Store grid positions in the piece
+
+	for _, point in ipairs(piece.anchorPointsInPixels[rotationIndex]) do
+		local gridX, gridY = getGridCellFromPosition(point.x, point.y)
+
+		if gridX and gridY then
+			Grid[gridY][gridX] = 1
+			table.insert(piece.occupiedCells, { x = gridX, y = gridY }) -- Store occupied cell
+		end
+	end
+end
+
 function Game:keypressed(key, scancode, isrepeat)
 	if key == "space" then
 		activePiece = nil
@@ -119,7 +160,14 @@ function Game:mousepressed(mx, my, mouseButton)
 	for i = #Pieces, 1, -1 do
 		local piece = Pieces[i]
 		local rotationIndex = piece.rotationIndex + 1
-		if piece.anchorPointsInPixels[rotationIndex] and self:AABB({ x = mx, y = my }, piece.anchorPointsInPixels[rotationIndex]) then
+
+		if self:AABB({ x = mx, y = my }, piece.anchorPointsInPixels[rotationIndex]) then
+			if piece.occupiedCells then
+				for _, cell in ipairs(piece.occupiedCells) do
+					Grid[cell.y][cell.x] = 0
+				end
+			end
+
 			activePiece = piece
 			moveToFront(i)
 
@@ -131,40 +179,17 @@ function Game:mousepressed(mx, my, mouseButton)
 end
 
 function Game:mousereleased(x, y, button, isTouch)
-	if activePiece then
-		local canPlacePiece = true
-		local snapped = { x = nil, y = nil }
-		local pointPos = {}
-		local rotationIndex = activePiece.rotationIndex + 1
+	if not activePiece then return end
 
-		for _, point in ipairs(activePiece.anchorPointsInPixels[rotationIndex]) do
-			local gridX, gridY = getGridCellFromPosition(point.x, point.y)
-			if gridX and gridY and Grid[gridY] and Grid[gridY][gridX] == 0 then
-				if not snapped.x or not snapped.y then
-					pointPos.x = point.x
-					pointPos.y = point.y
-					snapped.x = (gridX - 1) * CELLSIZE + (WW / 2 - (GRIDWIDTH * CELLSIZE) / 2)
-					snapped.y = (gridY - 1) * CELLSIZE + (WH / 2 - (GRIDHEIGHT * CELLSIZE) / 2)
-				end
-			else
-				canPlacePiece = false
-				break
-			end
-		end
+	local rotationIndex = activePiece.rotationIndex + 1
+	local canPlacePiece, snapped, pointPos = self:canPieceBePlaced(activePiece, rotationIndex)
 
-		if canPlacePiece and snapped.x and snapped.y then
-			activePiece.x = activePiece.x - (pointPos.x - (snapped.x + CELLSIZE / 2))
-			activePiece.y = activePiece.y - (pointPos.y - (snapped.y + CELLSIZE / 2))
-
-			for _, point in ipairs(activePiece.anchorPointsInPixels[rotationIndex]) do
-				local gridX, gridY = getGridCellFromPosition(point.x, point.y)
-				if gridX and gridY then
-					Grid[gridY][gridX] = 1
-				end
-			end
-		end
-		activePiece:sync()
+	if canPlacePiece and snapped and snapped.x and snapped.y then
+		self:snapPieceToGrid(activePiece, snapped, pointPos)
+		self:updateGrid(activePiece, rotationIndex)
 	end
+
+	activePiece:sync()
 	activePiece = nil
 end
 
@@ -175,8 +200,6 @@ function Game:draw()
 		piece:draw()
 	end
 	self:drawPieceIds()
-	-- DEBUG.add(countTotalAnchorPoints())
-	-- love.graphics.setColor(1, 1, 1, 1)
 end
 
 function Game:update(dt)
