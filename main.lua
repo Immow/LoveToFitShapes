@@ -6,6 +6,7 @@ Json = require("libs.json")
 require("loadassets")
 require("globals")
 require("libs.tprint")
+Anim8 = require("libs.anim8")
 Font = love.graphics.getFont()
 
 function love.load()

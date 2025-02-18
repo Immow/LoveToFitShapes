@@ -199,7 +199,7 @@ function Game:draw()
 	for _, piece in ipairs(Pieces) do
 		piece:draw()
 	end
-	self:drawPieceIds()
+	-- self:drawPieceIds()
 end
 
 function Game:update(dt)
@@ -208,6 +208,10 @@ function Game:update(dt)
 		activePiece.x = mx - activePiece.clickOffsetX
 		activePiece.y = my - activePiece.clickOffsetY
 		activePiece:sync()
+	end
+
+	for _, piece in ipairs(Pieces) do
+		piece:update(dt)
 	end
 end
 

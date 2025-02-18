@@ -13,6 +13,8 @@ function Object.new(settings)
 	instance.anchorPoints = settings.anchorPoints or error("no anchorPoints")
 	instance.id = settings.id or 0
 	instance.active = false
+	instance.state = 1
+	instance.states = settings.states
 
 	instance.centroids = {}
 	instance.anchorPointsInPixels = {}
@@ -29,7 +31,7 @@ function Object.new(settings)
 end
 
 function Object:sync()
-	local ox, oy = self.image:getWidth() / 2, self.image:getHeight() / 2
+	local ox, oy = self.w / 2, self.h / 2
 	for i, anchor in ipairs(self.anchorPoints[self.rotationIndex + 1]) do
 		local shapeCenter = self.centroids[self.rotationIndex + 1]
 		local offsetX = ox - shapeCenter.x
@@ -64,36 +66,37 @@ function Object:mousereleased(x, y, button, isTouch)
 end
 
 function Object:update(dt)
-
+	self.states[self.state]:update(dt)
 end
 
 function Object:draw()
 	-- draw image
 	love.graphics.setColor(1, 1, 1, 1)
-	local ox, oy = self.image:getWidth() / 2, self.image:getHeight() / 2
+	local ox, oy = self.w / 2, self.h / 2
 
 	love.graphics.push()
 	love.graphics.translate(self.x + ox, self.y + oy)
 	self.rotation = -self.rotationIndex * (math.pi / 2)
 	love.graphics.rotate(self.rotation)
 	love.graphics.translate(-ox, -oy)
-	love.graphics.draw(self.image, 0, 0)
+	-- love.graphics.draw(self.image, 0, 0)
+	self.states[self.state]:draw(self.image)
 
 	-- draw centroid of shape
-	love.graphics.setColor(0, 0, 1, 1)
-	love.graphics.circle("fill", ox, oy, 5)
+	-- love.graphics.setColor(0, 0, 1, 1)
+	-- love.graphics.circle("fill", ox, oy, 5)
 
 	love.graphics.pop()
 	love.graphics.setColor(1, 0, 0, 1)
 
 	-- draw anchorPoints
-	for _, anchor in ipairs(self.anchorPointsInPixels[self.rotationIndex + 1]) do
-		love.graphics.circle("fill", anchor.x, anchor.y, 3)
-	end
+	-- for _, anchor in ipairs(self.anchorPointsInPixels[self.rotationIndex + 1]) do
+	-- 	love.graphics.circle("fill", anchor.x, anchor.y, 3)
+	-- end
 
 	-- draw origin of shape
-	love.graphics.setColor(1, 1, 0, 1)
-	love.graphics.circle("fill", self.x, self.y, 5)
+	-- love.graphics.setColor(1, 1, 0, 1)
+	-- love.graphics.circle("fill", self.x, self.y, 5)
 end
 
 return Object

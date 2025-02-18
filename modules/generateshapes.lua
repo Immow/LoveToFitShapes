@@ -174,14 +174,21 @@ local function compareShapes(pieces, shapes)
 				anchorRotations[y] = ShiftShape(rotated)
 			end
 
+			local frames = 5
+			local frameWidth = image:getWidth() / frames -- divide by frames in spritesheet
+			local frameHeight = image:getHeight()
+			local w = image:getWidth()
+			local h = image:getHeight()
+			local g = Anim8.newGrid(frameWidth, frameHeight, w, h)
 			Pieces[i] = newObject.new({
 				x = 200,
 				y = 400,
-				w = image:getWidth(),
-				h = image:getHeight(),
+				w = frameWidth,
+				h = frameHeight,
 				anchorPoints = anchorRotations,
 				image = image,
-				id = shapes[lookup].id
+				id = shapes[lookup].id,
+				states = { Anim8.newAnimation(g("2-3", 1), 0.1) },
 			})
 			-- end
 		else
@@ -202,8 +209,8 @@ local function placePiecesInCircle()
 	for i, piece in ipairs(Pieces) do
 		local angle = (i - 1) * angleStep -- Evenly space pieces along the circle
 
-		piece.x = centerX + math.cos(angle) * radius - piece.image:getWidth() / 2
-		piece.y = centerY + math.sin(angle) * radius - piece.image:getHeight() / 2
+		piece.x = centerX + math.cos(angle) * radius - piece.w / 2
+		piece.y = centerY + math.sin(angle) * radius - piece.h / 2
 	end
 end
 
@@ -239,6 +246,8 @@ end
 
 function GenerateShapes:load()
 	self:genGrid()
+	-- self.grid[1][1] = 1
+	-- self.grid[1][2] = 1
 	self:floodFill()
 	shiftCoordinates(GeneratedShapeNumbers)
 	sortAllPieces(GeneratedShapeNumbers)
