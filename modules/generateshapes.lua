@@ -14,6 +14,14 @@ function GenerateShapes:genGrid()
 	end
 end
 
+function GenerateShapes:GenerateHoles(holes)
+	for i = 1, holes do
+		local x = love.math.random(1, GRIDWIDTH)
+		local y = love.math.random(1, GRIDHEIGHT)
+		self.grid[y][x] = -1
+	end
+end
+
 ---Returns the cells around the specified x and y index (above, below, left  and right)
 ---@param grid any Target table
 ---@param x number index
@@ -168,7 +176,7 @@ local function compareShapes(pieces, shapes)
 			-- print(Tprint(anchorRotations))
 
 			local anchorRotations = { shapes[lookup].default }
-			local image = Assets[shapes[lookup].id]
+			local image = Assets.shapes[shapes[lookup].id]
 			for y = 2, 4 do
 				local rotated = RotateOnce(anchorRotations[y - 1], "left")
 				anchorRotations[y] = ShiftShape(rotated)
@@ -188,7 +196,7 @@ local function compareShapes(pieces, shapes)
 				anchorPoints = anchorRotations,
 				image = image,
 				id = shapes[lookup].id,
-				states = { Anim8.newAnimation(g("2-3", 1), 0.1) },
+				states = { Anim8.newAnimation(g("1-2", 1), 0.1) },
 			})
 			-- end
 		else
@@ -248,6 +256,7 @@ function GenerateShapes:load()
 	self:genGrid()
 	-- self.grid[1][1] = 1
 	-- self.grid[1][2] = 1
+	self:GenerateHoles(4)
 	self:floodFill()
 	shiftCoordinates(GeneratedShapeNumbers)
 	sortAllPieces(GeneratedShapeNumbers)
@@ -268,7 +277,19 @@ function GenerateShapes:wheelmoved(x, y)
 end
 
 function GenerateShapes:draw()
-	-- self:drawShapeIds()
+	local gridOffsetX, gridOffsetY = WW / 2 - (GRIDWIDTH * CELLSIZE) / 2, WH / 2 - (GRIDHEIGHT * CELLSIZE) / 2
+	for y = 1, GRIDHEIGHT do
+		for x = 1, GRIDWIDTH do
+			local xPos = gridOffsetX + (CELLSIZE * (x - 1))
+			local yPos = gridOffsetY + (CELLSIZE * (y - 1))
+			if self.grid[y][x] == -1 then
+				love.graphics.setColor(0, 0, 0, 1)
+				love.graphics.rectangle("fill", xPos, yPos, CELLSIZE, CELLSIZE)
+			end
+		end
+	end
+	love.graphics.setColor(1, 1, 1, 1)
+	self:drawShapeIds()
 end
 
 return GenerateShapes
