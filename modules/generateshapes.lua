@@ -5,6 +5,7 @@ local WW, WH = love.graphics.getDimensions()
 local shapeId = 1
 local GeneratedShapeNumbers = {}
 local holeCount = 30
+local generationAttempts = 1
 
 function GenerateShapes:genGrid()
 	for y = 1, GRIDHEIGHT do
@@ -16,14 +17,23 @@ function GenerateShapes:genGrid()
 end
 
 function GenerateShapes:GenerateHoles(holes)
-	local count = 0
-	while count < holes do
-		local x = love.math.random(1, GRIDWIDTH)
-		local y = love.math.random(1, GRIDHEIGHT)
-		if self.grid[y][x] == 0 then
-			self.grid[y][x] = -1
-			count = count + 1
+	local positions = {}
+	for y = 1, GRIDHEIGHT do
+		for x = 1, GRIDWIDTH do
+			table.insert(positions, { x = x, y = y })
 		end
+	end
+
+	-- Shuffle the list randomly
+	for i = #positions, 2, -1 do
+		local j = love.math.random(1, i)
+		positions[i], positions[j] = positions[j], positions[i]
+	end
+
+	-- Pick the first `holes` positions
+	for i = 1, holes do
+		local pos = positions[i]
+		self.grid[pos.y][pos.x] = -1
 	end
 end
 
@@ -296,27 +306,16 @@ function GenerateShapes:reset()
 end
 
 function GenerateShapes:load()
-	local attempts = 1
-	self:genGrid()
-	-- self.grid[1][1] = 1
-	-- self.grid[1][2] = 1
-	self:GenerateHoles(holeCount)
-	if self:holeFloodFill() then
-		self:floodFill()
-		shiftCoordinates(GeneratedShapeNumbers)
-		sortAllPieces(GeneratedShapeNumbers)
-		compareShapes(GeneratedShapeNumbers, Shapes)
-		placePiecesInCircle()
-		syncPieces()
-	else
-		attempts = attempts + 1
-		if attempts > 50 then
-			error("Stack OverFlow :(")
-			return
-		end
-		self:reset()
-		self:load()
-	end
+	repeat
+		self:genGrid()
+		self:GenerateHoles(holeCount)
+	until self:holeFloodFill()
+	self:floodFill()
+	shiftCoordinates(GeneratedShapeNumbers)
+	sortAllPieces(GeneratedShapeNumbers)
+	compareShapes(GeneratedShapeNumbers, Shapes)
+	placePiecesInCircle()
+	syncPieces()
 end
 
 function GenerateShapes:keypressed(key, scancode, isrepeat)
