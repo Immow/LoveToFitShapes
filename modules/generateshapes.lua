@@ -4,6 +4,7 @@ local GenerateShapes = { grid = {} }
 local WW, WH = love.graphics.getDimensions()
 local shapeId = 1
 local GeneratedShapeNumbers = {}
+local holeCount = 30
 
 function GenerateShapes:genGrid()
 	for y = 1, GRIDHEIGHT do
@@ -15,10 +16,14 @@ function GenerateShapes:genGrid()
 end
 
 function GenerateShapes:GenerateHoles(holes)
-	for i = 1, holes do
+	local count = 0
+	while count < holes do
 		local x = love.math.random(1, GRIDWIDTH)
 		local y = love.math.random(1, GRIDHEIGHT)
-		self.grid[y][x] = -1
+		if self.grid[y][x] == 0 then
+			self.grid[y][x] = -1
+			count = count + 1
+		end
 	end
 end
 
@@ -47,6 +52,45 @@ local function getAdjacentCells(grid, x, y)
 	return adjacent
 end
 
+function GenerateShapes:holeCheckFloodFill(startCell, list)
+	local found = getAdjacentCells(self.grid, startCell.x, startCell.y)
+	for _, cord in ipairs(found) do
+		if not list[tostring("y" .. cord.y .. ",x" .. cord.x)] then
+			if cord.value ~= -1 then -- is ~= to hole
+				list[tostring("y" .. cord.y .. ",x" .. cord.x)] = true
+				self:holeCheckFloodFill(cord, list)
+			end
+		end
+	end
+end
+
+function GenerateShapes:holeFloodFill()
+	local list = {}
+	local startCell = {}
+	for y = 1, GRIDHEIGHT do
+		if next(list) then
+			break
+		end
+		for x = 1, GRIDWIDTH do
+			if self.grid[y][x] == 0 then
+				list[tostring("y" .. y .. ",x" .. x)] = true
+				startCell.x = x
+				startCell.y = y
+				break
+			end
+		end
+	end
+
+	self:holeCheckFloodFill(startCell, list)
+	local count = 0
+	for _, _ in pairs(list) do
+		count = count + 1
+	end
+	-- print(Tprint(list))
+	-- LP.add({ count = count, holeCount = holeCount, startCellX = startCell.x, startCellY = startCell.y })
+	return count + holeCount == GRIDHEIGHT * GRIDWIDTH
+end
+
 ---Filter a table so it returns a table of specified values
 ---@param cells table table we check against for specified value
 ---@param value number
@@ -62,11 +106,10 @@ local function filterCells(cells, value)
 end
 
 function GenerateShapes:drawShapeIds()
-	local gridOffsetX, gridOffsetY = WW / 2 - (GRIDWIDTH * CELLSIZE) / 2, WH / 2 - (GRIDHEIGHT * CELLSIZE) / 2
 	for y = 1, GRIDHEIGHT do
 		for x = 1, GRIDWIDTH do
-			local xPos = gridOffsetX + (CELLSIZE * (x - 1))
-			local yPos = gridOffsetY + (CELLSIZE * (y - 1))
+			local xPos = GRID_X + (CELLSIZE * (x - 1))
+			local yPos = GRID_Y + (CELLSIZE * (y - 1))
 			local xPosFont = xPos + CELLSIZE / 2 - Font:getWidth(self.grid[y][x]) / 2
 			local yPosFont = yPos + CELLSIZE / 2 - Font:getHeight() / 2
 			love.graphics.print(self.grid[y][x], xPosFont, yPosFont)
@@ -253,16 +296,27 @@ function GenerateShapes:reset()
 end
 
 function GenerateShapes:load()
+	local attempts = 1
 	self:genGrid()
 	-- self.grid[1][1] = 1
 	-- self.grid[1][2] = 1
-	self:GenerateHoles(4)
-	self:floodFill()
-	shiftCoordinates(GeneratedShapeNumbers)
-	sortAllPieces(GeneratedShapeNumbers)
-	compareShapes(GeneratedShapeNumbers, Shapes)
-	placePiecesInCircle()
-	syncPieces()
+	self:GenerateHoles(holeCount)
+	if self:holeFloodFill() then
+		self:floodFill()
+		shiftCoordinates(GeneratedShapeNumbers)
+		sortAllPieces(GeneratedShapeNumbers)
+		compareShapes(GeneratedShapeNumbers, Shapes)
+		placePiecesInCircle()
+		syncPieces()
+	else
+		attempts = attempts + 1
+		if attempts > 50 then
+			error("Stack OverFlow :(")
+			return
+		end
+		self:reset()
+		self:load()
+	end
 end
 
 function GenerateShapes:keypressed(key, scancode, isrepeat)
@@ -277,11 +331,10 @@ function GenerateShapes:wheelmoved(x, y)
 end
 
 function GenerateShapes:draw()
-	local gridOffsetX, gridOffsetY = WW / 2 - (GRIDWIDTH * CELLSIZE) / 2, WH / 2 - (GRIDHEIGHT * CELLSIZE) / 2
 	for y = 1, GRIDHEIGHT do
 		for x = 1, GRIDWIDTH do
-			local xPos = gridOffsetX + (CELLSIZE * (x - 1))
-			local yPos = gridOffsetY + (CELLSIZE * (y - 1))
+			local xPos = GRID_X + (CELLSIZE * (x - 1))
+			local yPos = GRID_Y + (CELLSIZE * (y - 1))
 			if self.grid[y][x] == -1 then
 				love.graphics.setColor(0, 0, 0, 1)
 				love.graphics.rectangle("fill", xPos, yPos, CELLSIZE, CELLSIZE)

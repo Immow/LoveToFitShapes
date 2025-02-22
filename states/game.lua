@@ -19,11 +19,10 @@ function Game:load()
 end
 
 local function drawGrid()
-	local gridOffsetX, gridOffsetY = WW / 2 - (GRIDWIDTH * CELLSIZE) / 2, WH / 2 - (GRIDHEIGHT * CELLSIZE) / 2
 	for y = 1, GRIDHEIGHT do
 		for x = 1, GRIDWIDTH do
-			local xPos = gridOffsetX + (CELLSIZE * (x - 1))
-			local yPos = gridOffsetY + (CELLSIZE * (y - 1))
+			local xPos = GRID_X + (CELLSIZE * (x - 1))
+			local yPos = GRID_Y + (CELLSIZE * (y - 1))
 			love.graphics.rectangle("line", xPos, yPos, CELLSIZE, CELLSIZE)
 		end
 	end
@@ -66,13 +65,9 @@ function Game:AABB(mouse, points)
 end
 
 local function getGridCellFromPosition(x, y)
-	-- Grid top-left corner in screen coordinates
-	local gridOffsetX = WW / 2 - (GRIDWIDTH * CELLSIZE) / 2
-	local gridOffsetY = WH / 2 - (GRIDHEIGHT * CELLSIZE) / 2
-
 	-- Convert screen coordinates to grid indices
-	local gridX = math.floor((x - gridOffsetX) / CELLSIZE) + 1
-	local gridY = math.floor((y - gridOffsetY) / CELLSIZE) + 1
+	local gridX = math.floor((x - GRID_X) / CELLSIZE) + 1
+	local gridY = math.floor((y - GRID_Y) / CELLSIZE) + 1
 
 	-- Check if the position is inside the grid
 	if gridX < 1 or gridX > GRIDWIDTH or gridY < 1 or gridY > GRIDHEIGHT then
@@ -83,11 +78,10 @@ local function getGridCellFromPosition(x, y)
 end
 
 function Game:drawPieceIds()
-	local gridOffsetX, gridOffsetY = WW / 2 - (GRIDWIDTH * CELLSIZE) / 2, WH / 2 - (GRIDHEIGHT * CELLSIZE) / 2
 	for y = 1, GRIDHEIGHT do
 		for x = 1, GRIDWIDTH do
-			local xPos = gridOffsetX + (CELLSIZE * (x - 1))
-			local yPos = gridOffsetY + (CELLSIZE * (y - 1))
+			local xPos = GRID_X + (CELLSIZE * (x - 1))
+			local yPos = GRID_Y + (CELLSIZE * (y - 1))
 			local xPosFont = xPos + CELLSIZE / 2 - Font:getWidth(Grid[y][x]) / 2
 			local yPosFont = yPos + CELLSIZE / 2 - Font:getHeight() / 2
 			love.graphics.print(Grid[y][x], xPosFont, yPosFont)
@@ -107,8 +101,8 @@ function Game:canPieceBePlaced(piece, rotationIndex)
 			if not snapped.x or not snapped.y then
 				pointPos.x = point.x
 				pointPos.y = point.y
-				snapped.x = (gridX - 1) * CELLSIZE + (WW / 2 - (GRIDWIDTH * CELLSIZE) / 2)
-				snapped.y = (gridY - 1) * CELLSIZE + (WH / 2 - (GRIDHEIGHT * CELLSIZE) / 2)
+				snapped.x = (gridX - 1) * CELLSIZE + GRID_X
+				snapped.y = (gridY - 1) * CELLSIZE + GRID_Y
 			end
 		else
 			return false, nil, nil -- If any part of the shape can't be placed, return early
