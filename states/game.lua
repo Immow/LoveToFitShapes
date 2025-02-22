@@ -1,21 +1,29 @@
 local Game = {}
 Pieces = {}
-local Grid = {} -- Change so we store data in tables so we can do Grid.debug or Grid.cell etc
+Grid = {
+	board = {}, -- Represents the grid itself (holes, placed pieces)
+	pieces = {} -- Stores generated puzzle pieces
+}
+
 local GenerateShapes = require("modules.generateshapes")
 local activePiece = nil
 
 function Game.genGrid()
 	for y = 1, GRIDHEIGHT do
-		Grid[y] = {}
+		Grid.board[y] = {}
 		for x = 1, GRIDWIDTH do
-			Grid[y][x] = 0
+			if Grid.pieces[y][x] > 0 then
+				Grid.board[y][x] = 0
+			elseif Grid.pieces[y][x] == -1 then
+				Grid.board[y][x] = -1
+			end
 		end
 	end
 end
 
 function Game:load()
-	Game.genGrid()
 	GenerateShapes:load()
+	Game.genGrid()
 end
 
 local function drawGrid()
@@ -23,7 +31,15 @@ local function drawGrid()
 		for x = 1, GRIDWIDTH do
 			local xPos = GRID_X + (CELLSIZE * (x - 1))
 			local yPos = GRID_Y + (CELLSIZE * (y - 1))
+			love.graphics.setColor(1, 1, 1, 1)
 			love.graphics.rectangle("line", xPos, yPos, CELLSIZE, CELLSIZE)
+			if Grid.board[y][x] == -1 then
+				love.graphics.setColor(0, 0, 0, 1)
+				love.graphics.rectangle("fill", xPos, yPos, CELLSIZE, CELLSIZE)
+			elseif Grid.board[y][x] >= 0 then
+				love.graphics.setColor(0.5, 0.5, 0.5, 1)
+				love.graphics.rectangle("fill", xPos, yPos, CELLSIZE, CELLSIZE)
+			end
 		end
 	end
 end
@@ -82,9 +98,9 @@ function Game:drawPieceIds()
 		for x = 1, GRIDWIDTH do
 			local xPos = GRID_X + (CELLSIZE * (x - 1))
 			local yPos = GRID_Y + (CELLSIZE * (y - 1))
-			local xPosFont = xPos + CELLSIZE / 2 - Font:getWidth(Grid[y][x]) / 2
+			local xPosFont = xPos + CELLSIZE / 2 - Font:getWidth(Grid.board[y][x]) / 2
 			local yPosFont = yPos + CELLSIZE / 2 - Font:getHeight() / 2
-			love.graphics.print(Grid[y][x], xPosFont, yPosFont)
+			love.graphics.print(Grid.board[y][x], xPosFont, yPosFont)
 		end
 	end
 end
@@ -97,7 +113,7 @@ function Game:canPieceBePlaced(piece, rotationIndex)
 	for _, point in ipairs(piece.anchorPointsInPixels[rotationIndex]) do
 		local gridX, gridY = getGridCellFromPosition(point.x, point.y)
 
-		if gridX and gridY and Grid[gridY] and Grid[gridY][gridX] == 0 then
+		if gridX and gridY and Grid.board[gridY] and Grid.board[gridY][gridX] == 0 then
 			if not snapped.x or not snapped.y then
 				pointPos.x = point.x
 				pointPos.y = point.y
@@ -124,7 +140,7 @@ function Game:updateGrid(piece, rotationIndex)
 		local gridX, gridY = getGridCellFromPosition(point.x, point.y)
 
 		if gridX and gridY then
-			Grid[gridY][gridX] = 1
+			Grid.board[gridY][gridX] = 1
 			table.insert(piece.occupiedCells, { x = gridX, y = gridY }) -- Store occupied cell
 		end
 	end
@@ -133,7 +149,7 @@ end
 function Game:keypressed(key, scancode, isrepeat)
 	if key == "space" then
 		activePiece = nil
-		Grid = {}
+		Grid.board = {}
 		GenerateShapes:reset()
 		Game:load()
 	end
@@ -158,7 +174,7 @@ function Game:mousepressed(mx, my, mouseButton)
 		if self:AABB({ x = mx, y = my }, piece.anchorPointsInPixels[rotationIndex]) then
 			if piece.occupiedCells then
 				for _, cell in ipairs(piece.occupiedCells) do
-					Grid[cell.y][cell.x] = 0
+					Grid.board[cell.y][cell.x] = 0
 				end
 			end
 
@@ -194,7 +210,7 @@ function Game:draw()
 	for _, piece in ipairs(Pieces) do
 		piece:draw()
 	end
-	-- self:drawPieceIds()
+	self:drawPieceIds()
 end
 
 function Game:update(dt)

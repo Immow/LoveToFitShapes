@@ -1,6 +1,6 @@
 local Shapes = require("shapes")
 local newObject = require("class.object")
-local GenerateShapes = { grid = {} }
+local GenerateShapes = {}
 local WW, WH = love.graphics.getDimensions()
 local shapeId = 1
 local GeneratedShapeNumbers = {}
@@ -8,9 +8,9 @@ local holeCount = 30
 
 function GenerateShapes:genGrid()
 	for y = 1, GRIDHEIGHT do
-		self.grid[y] = {}
+		Grid.pieces[y] = {}
 		for x = 1, GRIDWIDTH do
-			self.grid[y][x] = 0
+			Grid.pieces[y][x] = 0
 		end
 	end
 end
@@ -32,7 +32,7 @@ function GenerateShapes:GenerateHoles(holes)
 	-- Pick the first `holes` positions
 	for i = 1, holes do
 		local pos = positions[i]
-		self.grid[pos.y][pos.x] = -1
+		Grid.pieces[pos.y][pos.x] = -1
 	end
 end
 
@@ -68,7 +68,7 @@ function GenerateShapes:holeFloodFill()
 	for y = 1, GRIDHEIGHT do
 		if startCell then break end
 		for x = 1, GRIDWIDTH do
-			if self.grid[y][x] == 0 then
+			if Grid.pieces[y][x] == 0 then
 				startCell = { x = x, y = y }
 				break
 			end
@@ -88,7 +88,7 @@ function GenerateShapes:holeFloodFill()
 
 	while #stack > 0 do
 		local cell = table.remove(stack)
-		local adjacentCellList = getAdjacentCells(self.grid, cell.x, cell.y)
+		local adjacentCellList = getAdjacentCells(Grid.pieces, cell.x, cell.y)
 		for _, adj in ipairs(adjacentCellList) do
 			if not visited[adj.y][adj.x] and adj.value ~= -1 then
 				visited[adj.y][adj.x] = true
@@ -120,9 +120,9 @@ function GenerateShapes:drawShapeIds()
 		for x = 1, GRIDWIDTH do
 			local xPos = GRID_X + (CELLSIZE * (x - 1))
 			local yPos = GRID_Y + (CELLSIZE * (y - 1))
-			local xPosFont = xPos + CELLSIZE / 2 - Font:getWidth(self.grid[y][x]) / 2
+			local xPosFont = xPos + CELLSIZE / 2 - Font:getWidth(Grid.pieces[y][x]) / 2
 			local yPosFont = yPos + CELLSIZE / 2 - Font:getHeight() / 2
-			love.graphics.print(self.grid[y][x], xPosFont, yPosFont)
+			love.graphics.print(Grid.pieces[y][x], xPosFont, yPosFont)
 		end
 	end
 end
@@ -159,17 +159,17 @@ end
 
 function GenerateShapes:floodFill()
 	local cellPieces = {}
-	local currentIndex = checkForValue(self.grid, 0)  -- pick a Grid cell (index) to start from
+	local currentIndex = checkForValue(Grid.pieces, 0)  -- pick a Grid cell (index) to start from
 	if currentIndex then
-		self.grid[currentIndex.y][currentIndex.x] = shapeId -- set shapeId to cells belong to shape
+		Grid.pieces[currentIndex.y][currentIndex.x] = shapeId -- set shapeId to cells belong to shape
 		table.insert(cellPieces, { x = currentIndex.x, y = currentIndex.y })
-		local steps = love.math.random(2, 4)          -- determines shape size in cells
+		local steps = love.math.random(2, 4)            -- determines shape size in cells
 		for _ = 1, steps do
 			local cell = cellPieces[love.math.random(1, #cellPieces)]
-			local foundAdjacentCells = filterCells(getAdjacentCells(self.grid, cell.x, cell.y), 0) -- find cells of a certain value
+			local foundAdjacentCells = filterCells(getAdjacentCells(Grid.pieces, cell.x, cell.y), 0) -- find cells of a certain value
 			if #foundAdjacentCells == 0 then break end
 			local pickedCell = love.math.random(1, #foundAdjacentCells)
-			self.grid[foundAdjacentCells[pickedCell].y][foundAdjacentCells[pickedCell].x] = shapeId
+			Grid.pieces[foundAdjacentCells[pickedCell].y][foundAdjacentCells[pickedCell].x] = shapeId
 			currentIndex = { x = foundAdjacentCells[pickedCell].x, y = foundAdjacentCells[pickedCell].y }
 			table.insert(cellPieces, currentIndex)
 		end
@@ -300,7 +300,7 @@ end
 
 function GenerateShapes:reset()
 	shapeId = 1
-	self.grid = {}
+	Grid.pieces = {}
 	GeneratedShapeNumbers = {}
 	Pieces = {}
 end
@@ -330,18 +330,8 @@ function GenerateShapes:wheelmoved(x, y)
 end
 
 function GenerateShapes:draw()
-	for y = 1, GRIDHEIGHT do
-		for x = 1, GRIDWIDTH do
-			local xPos = GRID_X + (CELLSIZE * (x - 1))
-			local yPos = GRID_Y + (CELLSIZE * (y - 1))
-			if self.grid[y][x] == -1 then
-				love.graphics.setColor(0, 0, 0, 1)
-				love.graphics.rectangle("fill", xPos, yPos, CELLSIZE, CELLSIZE)
-			end
-		end
-	end
-	love.graphics.setColor(1, 1, 1, 1)
-	self:drawShapeIds()
+	-- love.graphics.setColor(1, 1, 1, 1)
+	-- self:drawShapeIds()
 end
 
 return GenerateShapes
