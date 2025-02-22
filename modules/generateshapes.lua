@@ -5,7 +5,6 @@ local WW, WH = love.graphics.getDimensions()
 local shapeId = 1
 local GeneratedShapeNumbers = {}
 local holeCount = 30
-local generationAttempts = 1
 
 function GenerateShapes:genGrid()
 	for y = 1, GRIDHEIGHT do
@@ -62,42 +61,43 @@ local function getAdjacentCells(grid, x, y)
 	return adjacent
 end
 
-function GenerateShapes:holeCheckFloodFill(startCell, list)
-	local found = getAdjacentCells(self.grid, startCell.x, startCell.y)
-	for _, cord in ipairs(found) do
-		if not list[tostring("y" .. cord.y .. ",x" .. cord.x)] then
-			if cord.value ~= -1 then -- is ~= to hole
-				list[tostring("y" .. cord.y .. ",x" .. cord.x)] = true
-				self:holeCheckFloodFill(cord, list)
-			end
-		end
-	end
-end
-
 function GenerateShapes:holeFloodFill()
-	local list = {}
-	local startCell = {}
+	local visited = {}
+	local startCell = nil
+
 	for y = 1, GRIDHEIGHT do
-		if next(list) then
-			break
-		end
+		if startCell then break end
 		for x = 1, GRIDWIDTH do
 			if self.grid[y][x] == 0 then
-				list[tostring("y" .. y .. ",x" .. x)] = true
-				startCell.x = x
-				startCell.y = y
+				startCell = { x = x, y = y }
 				break
 			end
 		end
 	end
 
-	self:holeCheckFloodFill(startCell, list)
-	local count = 0
-	for _, _ in pairs(list) do
-		count = count + 1
+	if not startCell then return false end
+
+	for y = 1, GRIDHEIGHT do
+		visited[y] = {}
 	end
-	-- print(Tprint(list))
-	-- LP.add({ count = count, holeCount = holeCount, startCellX = startCell.x, startCellY = startCell.y })
+
+	-- Flood fill using an iterative stack-based approach
+	local stack = { startCell }
+	visited[startCell.y][startCell.x] = true
+	local count = 1
+
+	while #stack > 0 do
+		local cell = table.remove(stack)
+		local adjacentCellList = getAdjacentCells(self.grid, cell.x, cell.y)
+		for _, adj in ipairs(adjacentCellList) do
+			if not visited[adj.y][adj.x] and adj.value ~= -1 then
+				visited[adj.y][adj.x] = true
+				count = count + 1
+				table.insert(stack, { x = adj.x, y = adj.y })
+			end
+		end
+	end
+
 	return count + holeCount == GRIDHEIGHT * GRIDWIDTH
 end
 
