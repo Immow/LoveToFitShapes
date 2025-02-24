@@ -225,8 +225,7 @@ local function compareShapes(pieces, shapes)
 		end
 		if shapes[lookup] then
 			-- if i == 1 then
-			-- lookup = "x1y2x2y2x3y1x3y2x4y1"
-			-- print(Tprint(anchorRotations))
+			-- 	lookup = "x1y2x2y2x3y1x3y2x4y1"
 
 			local anchorRotations = { shapes[lookup].default }
 			local image = Assets.shapes[shapes[lookup].id]

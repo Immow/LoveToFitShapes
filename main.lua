@@ -1,12 +1,6 @@
+require("libs")
 require("globals")
-StateManager = require("libs.statemanager")
-LM = require("libs.lovemeasure")
-LP = require("libs.loveprint")
-DEBUG = require("libs.lovedebugdraw")
-Json = require("libs.json")
 require("loadassets")
-require("libs.tprint")
-Anim8 = require("libs.anim8")
 Font = love.graphics.getFont()
 
 function love.load()
