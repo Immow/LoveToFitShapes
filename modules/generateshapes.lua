@@ -4,7 +4,7 @@ local GenerateShapes = {}
 local WW, WH = love.graphics.getDimensions()
 local shapeId = 1
 local GeneratedShapeNumbers = {}
-local holeCount = 30
+local holeCount = 20
 
 function GenerateShapes:genGrid()
 	for y = 1, GRIDHEIGHT do

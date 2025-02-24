@@ -1,4 +1,4 @@
-local Game = {}
+local Game = { state = "unsolved" }
 Pieces = {}
 Grid = {
 	board = {}, -- Represents the grid itself (holes, placed pieces)
@@ -22,8 +22,21 @@ function Game.genGrid()
 end
 
 function Game:load()
+	self.state = "unsolved"
 	GenerateShapes:load()
 	Game.genGrid()
+end
+
+function Game:getGameState()
+	for y = 1, GRIDHEIGHT do
+		for x = 1, GRIDWIDTH do
+			if Grid.board[y][x] == 0 then
+				return
+			end
+		end
+	end
+	self.state = "solved"
+	return self.state
 end
 
 local function drawGrid()
@@ -167,6 +180,7 @@ function Game:wheelmoved(x, y)
 end
 
 function Game:mousepressed(mx, my, mouseButton)
+	if self.state == "solved" then return end
 	for i = #Pieces, 1, -1 do
 		local piece = Pieces[i]
 		local rotationIndex = piece.rotationIndex + 1
@@ -190,7 +204,6 @@ end
 
 function Game:mousereleased(x, y, button, isTouch)
 	if not activePiece then return end
-
 	local rotationIndex = activePiece.rotationIndex + 1
 	local canPlacePiece, snapped, pointPos = self:canPieceBePlaced(activePiece, rotationIndex)
 
@@ -201,6 +214,7 @@ function Game:mousereleased(x, y, button, isTouch)
 
 	activePiece:sync()
 	activePiece = nil
+	self:getGameState()
 end
 
 function Game:draw()
@@ -210,7 +224,8 @@ function Game:draw()
 	for _, piece in ipairs(Pieces) do
 		piece:draw()
 	end
-	self:drawPieceIds()
+	-- self:drawPieceIds()
+	love.graphics.print(self.state)
 end
 
 function Game:update(dt)
