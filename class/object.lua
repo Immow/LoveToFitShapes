@@ -87,7 +87,6 @@ function Object:draw()
 	-- love.graphics.circle("fill", ox, oy, 5)
 
 	love.graphics.pop()
-
 	-- love.graphics.setColor(1, 0, 0, 1)
 	-- draw anchorPoints
 	-- for _, anchor in ipairs(self.anchorPointsInPixels[self.rotationIndex + 1]) do

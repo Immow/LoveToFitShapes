@@ -4,7 +4,7 @@ local GenerateShapes = {}
 local WW, WH = love.graphics.getDimensions()
 local shapeId = 1
 local GeneratedShapeNumbers = {}
-local holeCount = 20
+local holeCount = 0
 
 function GenerateShapes:genGrid()
 	for y = 1, GRIDHEIGHT do
@@ -225,8 +225,8 @@ local function compareShapes(pieces, shapes)
 		end
 		if shapes[lookup] then
 			-- if i == 1 then
-			-- 	lookup = "x1y2x2y2x3y1x3y2x4y1"
-
+			-- 	lookup = "x1y3x2y1x2y2x2y3x3y1"
+			-- end
 			local anchorRotations = { shapes[lookup].default }
 			local image = Assets.shapes[shapes[lookup].id]
 			for y = 2, 4 do
@@ -250,7 +250,6 @@ local function compareShapes(pieces, shapes)
 				id = shapes[lookup].id,
 				states = { Anim8.newAnimation(g("1-2", 1), 0.1) },
 			})
-			-- end
 		else
 			print("compareShapes function, no: " .. lookup)
 			-- print(Tprint(piece))
@@ -271,6 +270,17 @@ local function placePiecesInCircle()
 
 		piece.x = centerX + math.cos(angle) * radius - piece.w / 2
 		piece.y = centerY + math.sin(angle) * radius - piece.h / 2
+		if piece.x + piece.w > WW then
+			piece.x = WW - (piece.w + 10)
+		elseif piece.x < 0 then
+			piece.x = CELLSIZE
+		end
+
+		if piece.y + piece.h > WH then
+			piece.y = WH - (piece.h + 10)
+		elseif piece.y < 0 then
+			piece.y = CELLSIZE
+		end
 	end
 end
 
