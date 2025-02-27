@@ -4,7 +4,7 @@ local GenerateShapes = {}
 local WW, WH = love.graphics.getDimensions()
 local shapeId = 1
 local GeneratedShapeNumbers = {}
-local holeCount = 0
+local holeCount = 20
 
 function GenerateShapes:genGrid()
 	for y = 1, GRIDHEIGHT do
@@ -225,7 +225,7 @@ local function compareShapes(pieces, shapes)
 		end
 		if shapes[lookup] then
 			-- if i == 1 then
-			-- 	lookup = "x1y3x2y1x2y2x2y3x3y1"
+			-- 	lookup = "x1y1x1y2x2y2x2y3x3y3"
 			-- end
 			local anchorRotations = { shapes[lookup].default }
 			local image = Assets.shapes[shapes[lookup].id]
@@ -340,7 +340,7 @@ end
 
 function GenerateShapes:draw()
 	-- love.graphics.setColor(1, 1, 1, 1)
-	-- self:drawShapeIds()
+	self:drawShapeIds()
 end
 
 return GenerateShapes

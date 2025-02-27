@@ -168,6 +168,19 @@ function Game:keypressed(key, scancode, isrepeat)
 	end
 end
 
+function Game:playRotationSound(piece)
+	local size = #piece.anchorPoints[1]
+
+	local basePitch = 1.2 - (size * 0.05)
+	local pitchVariation = love.math.random() * 0.1
+	local finalPitch = math.max(0.8, basePitch + pitchVariation)
+
+	if Assets.sounds.rotate then
+		Assets.sounds.rotate:setPitch(finalPitch)
+		Assets.sounds.rotate:play()
+	end
+end
+
 function Game:wheelmoved(x, y)
 	if activePiece then
 		if y > 0 then
@@ -176,6 +189,8 @@ function Game:wheelmoved(x, y)
 			activePiece.rotationIndex = (activePiece.rotationIndex - 1) % 4 -- Rotate 90° counterclockwise
 			if activePiece.rotationIndex < 0 then activePiece.rotationIndex = activePiece.rotationIndex + 4 end
 		end
+
+		self:playRotationSound(activePiece)
 	end
 end
 
@@ -197,6 +212,14 @@ function Game:mousepressed(mx, my, mouseButton)
 
 			activePiece.clickOffsetX = mx - activePiece.x
 			activePiece.clickOffsetY = my - activePiece.y
+
+			if Assets.sounds.animals[activePiece.id] and #Assets.sounds.animals[activePiece.id] > 0 then
+				local size = #Assets.sounds.animals[activePiece.id]
+				local r = love.math.random(1, size)
+				local rp = 1 + love.math.random() * 0.1
+				Assets.sounds.animals[activePiece.id][r]:setPitch(rp)
+				Assets.sounds.animals[activePiece.id][r]:play()
+			end
 			break
 		end
 	end

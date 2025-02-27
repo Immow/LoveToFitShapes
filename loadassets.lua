@@ -1,14 +1,34 @@
+local shapePath = "assets/shapes/"
+local soundPathAnimals = "assets/sounds/animals/"
+
 Assets = {
 	shapes = {},
-	background = {}
+	background = {},
+	sounds = {
+		animals = {},
+		rotate = love.audio.newSource("assets/sounds/rotate/rotate.wav", "stream")
+	}
 }
 
-local path = "assets/shapes/"
 
-local files = love.filesystem.getDirectoryItems(path)
+local shapeFiles = love.filesystem.getDirectoryItems(shapePath)
+local folders = love.filesystem.getDirectoryItems(soundPathAnimals)
 
-for _, file in ipairs(files) do
-	Assets.shapes[tonumber(string.match(file, "%d+"))] = love.graphics.newImage(path .. file)
+for i = 1, #folders do
+	Assets.sounds.animals[i] = {}
+	local files = love.filesystem.getDirectoryItems(soundPathAnimals .. i)
+	for j, file in ipairs(files) do
+		if file then
+			Assets.sounds.animals[i][j] = love.audio.newSource(soundPathAnimals .. i .. "/" .. file, "stream")
+		end
+	end
+end
+
+-- print(Tprint(Assets.sounds.animals.click))
+
+
+for _, file in ipairs(shapeFiles) do
+	Assets.shapes[tonumber(string.match(file, "%d+"))] = love.graphics.newImage(shapePath .. file)
 	-- print(string.match(file, "%d+"))
 end
 
