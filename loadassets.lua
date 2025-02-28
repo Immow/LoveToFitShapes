@@ -6,7 +6,8 @@ Assets = {
 	background = {},
 	sounds = {
 		animals = {},
-		rotate = love.audio.newSource("assets/sounds/rotate/rotate.wav", "stream")
+		rotate = love.audio.newSource("assets/sounds/rotate/rotate.wav", "stream"),
+		place = love.audio.newSource("assets/sounds/place/place.wav", "stream")
 	}
 }
 

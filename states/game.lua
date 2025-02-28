@@ -113,6 +113,11 @@ function Game:drawPieceIds()
 			local yPos = GRID_Y + (CELLSIZE * (y - 1))
 			local xPosFont = xPos + CELLSIZE / 2 - Font:getWidth(Grid.board[y][x]) / 2
 			local yPosFont = yPos + CELLSIZE / 2 - Font:getHeight() / 2
+			if Grid.board[y][x] ~= 0 then
+				love.graphics.setColor(1, 0, 0, 1)
+			else
+				love.graphics.setColor(0, 0, 0, 1)
+			end
 			love.graphics.print(Grid.board[y][x], xPosFont, yPosFont)
 		end
 	end
@@ -195,7 +200,8 @@ function Game:wheelmoved(x, y)
 end
 
 function Game:mousepressed(mx, my, mouseButton)
-	if self.state == "solved" then return end
+	if mouseButton ~= 1 then return end
+	-- if self.state == "solved" then return end
 	for i = #Pieces, 1, -1 do
 		local piece = Pieces[i]
 		local rotationIndex = piece.rotationIndex + 1
@@ -216,7 +222,7 @@ function Game:mousepressed(mx, my, mouseButton)
 			if Assets.sounds.animals[activePiece.id] and #Assets.sounds.animals[activePiece.id] > 0 then
 				local size = #Assets.sounds.animals[activePiece.id]
 				local r = love.math.random(1, size)
-				local rp = 1 + love.math.random() * 0.1
+				local rp = 1 + love.math.random() * 0.05
 				Assets.sounds.animals[activePiece.id][r]:setPitch(rp)
 				Assets.sounds.animals[activePiece.id][r]:play()
 			end
@@ -233,21 +239,25 @@ function Game:mousereleased(x, y, button, isTouch)
 	if canPlacePiece and snapped and snapped.x and snapped.y then
 		self:snapPieceToGrid(activePiece, snapped, pointPos)
 		self:updateGrid(activePiece, rotationIndex)
+		Assets.sounds.place:setPitch(1.2)
+		Assets.sounds.place:play()
+	else
+		activePiece.occupiedCells = {}
 	end
 
 	activePiece:sync()
-	activePiece = nil
 	self:getGameState()
+	activePiece = nil
 end
 
 function Game:draw()
 	love.graphics.draw(Assets.background.image, Assets.background.quad, 0, 0)
 	drawGrid()
-	GenerateShapes:draw()
+	-- GenerateShapes:draw()
 	for _, piece in ipairs(Pieces) do
 		piece:draw()
 	end
-	-- self:drawPieceIds()
+	self:drawPieceIds()
 	love.graphics.print(self.state)
 end
 
