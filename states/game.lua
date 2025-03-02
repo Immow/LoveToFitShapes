@@ -23,7 +23,7 @@ end
 
 function Game:load()
 	self.state = "unsolved"
-	GenerateShapes:load()
+	GenerateShapes:generate()
 	Game.genGrid()
 end
 
@@ -44,14 +44,14 @@ local function drawGrid()
 		for x = 1, GRIDWIDTH do
 			local xPos = GRID_X + (CELLSIZE * (x - 1))
 			local yPos = GRID_Y + (CELLSIZE * (y - 1))
-			love.graphics.setColor(1, 1, 1, 1)
-			love.graphics.rectangle("line", xPos, yPos, CELLSIZE, CELLSIZE)
 			if Grid.board[y][x] == -1 then
 				love.graphics.setColor(0, 0, 0, 1)
 				love.graphics.rectangle("fill", xPos, yPos, CELLSIZE, CELLSIZE)
 			elseif Grid.board[y][x] >= 0 then
-				love.graphics.setColor(0.5, 0.5, 0.5, 1)
+				love.graphics.setColor(233 / 255, 198 / 255, 175 / 255, 1)
 				love.graphics.rectangle("fill", xPos, yPos, CELLSIZE, CELLSIZE)
+				love.graphics.setColor(1, 1, 1, 1)
+				love.graphics.rectangle("line", xPos, yPos, CELLSIZE, CELLSIZE)
 			end
 		end
 	end
@@ -164,12 +164,48 @@ function Game:updateGrid(piece, rotationIndex)
 	end
 end
 
+function Game:writeBoardState()
+	local savedData = {}
+
+	if love.filesystem.getInfo("games.json") then
+		local file = love.filesystem.read("games.json")
+		savedData = Json.decode(file) or {}
+	end
+
+	if type(savedData) ~= "table" then
+		savedData = {}
+	end
+
+	table.insert(savedData, { Grid.pieces, GeneratedShapeNumbers })
+
+	local encodeFile = Json.encode(savedData)
+	love.filesystem.write("games.json", encodeFile)
+end
+
+function Game:loadBoard()
+	activePiece = nil
+	Grid.board = {}
+	GenerateShapes:reset()
+end
+
 function Game:keypressed(key, scancode, isrepeat)
 	if key == "space" then
 		activePiece = nil
 		Grid.board = {}
 		GenerateShapes:reset()
-		Game:load()
+		self:load()
+	elseif key == "r" then
+		self:writeBoardState()
+	elseif key == "l" then
+		GenerateShapes:reset()
+		activePiece = nil
+		local file = love.filesystem.read("games.json") or error("no file to load from")
+		local decodeFile = Json.decode(file)
+		Grid.pieces = decodeFile[1][1]
+		GeneratedShapeNumbers = decodeFile[1][2]
+		self.state = "unsolved"
+		GenerateShapes:load()
+		Game.genGrid()
 	end
 end
 
@@ -253,11 +289,11 @@ end
 function Game:draw()
 	love.graphics.draw(Assets.background.image, Assets.background.quad, 0, 0)
 	drawGrid()
-	-- GenerateShapes:draw()
+	GenerateShapes:draw()
 	for _, piece in ipairs(Pieces) do
 		piece:draw()
 	end
-	self:drawPieceIds()
+	-- self:drawPieceIds()
 	love.graphics.print(self.state)
 end
 

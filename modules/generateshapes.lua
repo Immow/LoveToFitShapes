@@ -3,7 +3,7 @@ local newObject = require("class.object")
 local GenerateShapes = {}
 local WW, WH = love.graphics.getDimensions()
 local shapeId = 1
-local GeneratedShapeNumbers = {}
+GeneratedShapeNumbers = {}
 local holeCount = 20
 
 function GenerateShapes:genGrid()
@@ -314,7 +314,7 @@ function GenerateShapes:reset()
 	Pieces = {}
 end
 
-function GenerateShapes:load()
+function GenerateShapes:generate()
 	repeat
 		self:genGrid()
 		self:GenerateHoles(holeCount)
@@ -327,11 +327,21 @@ function GenerateShapes:load()
 	syncPieces()
 end
 
+function GenerateShapes:load()
+	-- self:floodFill()
+	-- shiftCoordinates(GeneratedShapeNumbers)
+	-- sortAllPieces(GeneratedShapeNumbers)
+
+	compareShapes(GeneratedShapeNumbers, Shapes)
+	placePiecesInCircle()
+	syncPieces()
+end
+
 function GenerateShapes:keypressed(key, scancode, isrepeat)
-	if key == "space" then
-		self:reset()
-		self:load()
-	end
+	-- if key == "space" then
+	-- 	self:reset()
+	-- 	self:load()
+	-- end
 end
 
 function GenerateShapes:wheelmoved(x, y)
