@@ -1,5 +1,5 @@
 local Shapes = require("shapes")
-local newObject = require("class.object")
+local newObject = require("class.shape")
 local GenerateShapes = {}
 local WW, WH = love.graphics.getDimensions()
 local shapeId = 1

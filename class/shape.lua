@@ -1,9 +1,9 @@
-local Object = {}
-Object.__index = Object
+local Shape = {}
+Shape.__index = Shape
 
 ---@class Object
-function Object.new(settings)
-	local instance = setmetatable({}, Object)
+function Shape.new(settings)
+	local instance = setmetatable({}, Shape)
 	instance.x = settings.x or 0
 	instance.y = settings.y or 0
 	instance.w = settings.w or error("no width")
@@ -19,7 +19,7 @@ function Object.new(settings)
 	instance.centroids = {}
 	instance.anchorPointsInPixels = {}
 	for i = 1, #instance.anchorPoints do
-		instance.centroids[i] = Object.computeCentroid(instance.anchorPoints[i])
+		instance.centroids[i] = Shape.computeCentroid(instance.anchorPoints[i])
 		instance.anchorPointsInPixels[i] = {}
 
 		for j = 1, #instance.anchorPoints[i] do
@@ -30,7 +30,7 @@ function Object.new(settings)
 	return instance
 end
 
-function Object:sync()
+function Shape:sync()
 	local ox, oy = self.w / 2, self.h / 2
 	for i, anchor in ipairs(self.anchorPoints[self.rotationIndex + 1]) do
 		local shapeCenter = self.centroids[self.rotationIndex + 1]
@@ -43,7 +43,7 @@ function Object:sync()
 	end
 end
 
-function Object.computeCentroid(cells)
+function Shape.computeCentroid(cells)
 	local largestX = 0
 	local largestY = 0
 	for _, value in ipairs(cells) do
@@ -53,23 +53,23 @@ function Object.computeCentroid(cells)
 	return { x = (largestX) * CELLSIZE / 2, y = (largestY) * CELLSIZE / 2 }
 end
 
-function Object:wheelmoved(x, y)
+function Shape:wheelmoved(x, y)
 
 end
 
-function Object:mousepressed(x, y, button, isTouch)
+function Shape:mousepressed(x, y, button, isTouch)
 
 end
 
-function Object:mousereleased(x, y, button, isTouch)
+function Shape:mousereleased(x, y, button, isTouch)
 
 end
 
-function Object:update(dt)
+function Shape:update(dt)
 	self.states[self.state]:update(dt)
 end
 
-function Object:draw()
+function Shape:draw()
 	-- draw image
 	love.graphics.setColor(1, 1, 1, 1)
 	local ox, oy = self.w / 2, self.h / 2
@@ -87,7 +87,7 @@ function Object:draw()
 	-- love.graphics.circle("fill", ox, oy, 5)
 
 	love.graphics.pop()
-	love.graphics.setColor(1, 0, 0, 1)
+	-- love.graphics.setColor(1, 0, 0, 1)
 	-- draw anchorPoints
 	-- for _, anchor in ipairs(self.anchorPointsInPixels[self.rotationIndex + 1]) do
 	-- 	love.graphics.circle("fill", anchor.x, anchor.y, 3)
@@ -98,4 +98,4 @@ function Object:draw()
 	-- love.graphics.circle("fill", self.x, self.y, 5)
 end
 
-return Object
+return Shape

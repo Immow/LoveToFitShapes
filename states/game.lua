@@ -289,7 +289,7 @@ end
 function Game:draw()
 	love.graphics.draw(Assets.background.image, Assets.background.quad, 0, 0)
 	drawGrid()
-	GenerateShapes:draw()
+	-- GenerateShapes:draw()
 	for _, piece in ipairs(Pieces) do
 		piece:draw()
 	end

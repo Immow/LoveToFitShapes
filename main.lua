@@ -5,7 +5,8 @@ Font = love.graphics.getFont()
 
 function love.load()
 	StateManager:addState("states.game")
-	StateManager:setState("game")
+	StateManager:addState("states.mainmenu")
+	StateManager:setState("mainmenu")
 	StateManager:load()
 end
 
@@ -31,6 +32,6 @@ end
 
 function love.draw()
 	StateManager:call("draw")
-	LM:draw()
-	DEBUG.draw()
+	-- LM:draw()
+	-- DEBUG.draw()
 end
